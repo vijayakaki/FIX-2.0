@@ -197,21 +197,20 @@ function getImpactBand(score) {
 }
 
 /**
- * Initialize Leaflet Map - Memphis area focus like dashboard image
+ * Initialize Leaflet Map - Start with US overview, no markers until search
  */
 function initMap() {
     const mapEl = document.getElementById('map');
     if (!mapEl || map) return;
     
-    // Center on Memphis, TN as shown in dashboard image
-    map = L.map('map').setView([35.1495, -89.9711], 11);
+    // Center on US - user will search for specific ZIP
+    map = L.map('map').setView([39.8283, -98.5795], 4);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
     }).addTo(map);
     
-    // Show Memphis ZIP codes with Local Retention % by default
-    addZipMarkers(['38126', '38108', '38127', '38107', '38112', '38114', '38106']);
+    // No markers by default - will show when user searches
 }
 
 /**
