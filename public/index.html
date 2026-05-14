@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIX$ Dashboard - Community Intelligence for Economic Justice</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-text">FIX<span class="logo-dollar">$</span></span>
+                </div>
+                <p class="logo-tagline">FaireChange Initiative eXecution</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">💰</span>
+                    <span>Economic Flow</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span>EJV Insights</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">🏪</span>
+                    <span>Businesses</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span>Jobs & Workforce</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">❤️</span>
+                    <span>Community Impact</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">🗺️</span>
+                    <span>Maps</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">📄</span>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">🔔</span>
+                    <span>Alerts</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">🔍</span>
+                    <span>Data Explorer</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-quote">
+                <span class="quote-mark">"</span>
+                <p>When communities see the data, they can shape the future.</p>
+                <p class="quote-author">– FIX$</p>
+            </div>
+            
+            <div class="sidebar-footer">
+                <a href="https://www.fairechange.com" target="_blank">www.fairechange.com</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h1 class="page-title">FIX$ DASHBOARD</h1>
+                    <p class="page-subtitle">Visualizing Economic Flow. Empowering Communities.</p>
+                </div>
+                <div class="header-right">
+                    <div class="location-selector">
+                        <select id="locationSelect">
+                            <option value="38126">MEMPHIS, TN 38126</option>
+                            <option value="10001">NEW YORK, NY 10001</option>
+                            <option value="90210">LOS ANGELES, CA 90210</option>
+                            <option value="60601">CHICAGO, IL 60601</option>
+                        </select>
+                    </div>
+                    <div class="date-selector">
+                        <input type="text" id="dateRange" value="May 1 – May 31, 2025" readonly>
+                        <span class="calendar-icon">📅</span>
+                    </div>
+                    <button class="export-btn">
+                        <span>📤</span> Export
+                    </button>
+                </div>
+            </header>
+
+            <!-- KPI Cards -->
+            <section class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-icon blue">💰</div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">TOTAL SPEND TRACKED</span>
+                        <span class="kpi-value">$128.4M</span>
+                        <span class="kpi-change positive">+18.6% vs Apr 1 – Apr 30, 2025</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon green">🏠</div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">LOCAL RETENTION</span>
+                        <span class="kpi-value">32.7%</span>
+                        <span class="kpi-change positive">+4.3 pts vs Apr</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon orange">🛡️</div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">ECONOMIC JUSTICE VALUE (EJV)</span>
+                        <span class="kpi-value">71</span>
+                        <span class="kpi-badge">High Impact</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon teal">👥</div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">JOBS SUPPORTED</span>
+                        <span class="kpi-value">2,842</span>
+                        <span class="kpi-change positive">+312 vs Apr</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon green-dark">🏪</div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">BUSINESSES SUPPORTED</span>
+                        <span class="kpi-value">1,156</span>
+                        <span class="kpi-change positive">+97 vs Apr</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Grid -->
+            <section class="dashboard-grid">
+                <!-- Economic Flow Chart -->
+                <div class="card economic-flow-card">
+                    <div class="card-header">
+                        <h3>ECONOMIC FLOW: WHERE MONEY GOES</h3>
+                        <button class="info-btn">ℹ️</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="donut-container">
+                            <canvas id="economicFlowChart"></canvas>
+                            <div class="donut-center">
+                                <span class="donut-value">$128.4M</span>
+                                <span class="donut-label">Total Spend</span>
+                            </div>
+                        </div>
+                        <div class="flow-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #2d5a27"></span>
+                                <span class="legend-label">Local Businesses</span>
+                                <span class="legend-value">32.7%</span>
+                                <span class="legend-amount">$42.0M</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #7cb342"></span>
+                                <span class="legend-label">Local Leakage</span>
+                                <span class="legend-value">41.3%</span>
+                                <span class="legend-amount">$52.9M</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #c5e1a5"></span>
+                                <span class="legend-label">Outside Regional</span>
+                                <span class="legend-value">16.2%</span>
+                                <span class="legend-amount">$20.8M</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #f5f5dc"></span>
+                                <span class="legend-label">Outside State</span>
+                                <span class="legend-value">9.8%</span>
+                                <span class="legend-amount">$12.7M</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <p>Keep more dollars local. Strengthen our community.</p>
+                    </div>
+                </div>
+
+                <!-- Economic Flow Map -->
+                <div class="card map-card">
+                    <div class="card-header">
+                        <h3>ECONOMIC FLOW MAP</h3>
+                        <span class="card-subtitle">Local Retention by ZIP Code</span>
+                        <button class="expand-btn">⤢</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="map-container" id="mapContainer">
+                            <div class="zip-region" style="top: 15%; left: 55%;">
+                                <span class="zip-code">38108</span>
+                                <span class="zip-pct">28%</span>
+                            </div>
+                            <div class="zip-region" style="top: 25%; left: 75%;">
+                                <span class="zip-code">38127</span>
+                                <span class="zip-pct">31%</span>
+                            </div>
+                            <div class="zip-region highlight" style="top: 40%; left: 50%;">
+                                <span class="zip-code">38126</span>
+                                <span class="zip-pct">33%</span>
+                            </div>
+                            <div class="zip-region" style="top: 35%; left: 25%;">
+                                <span class="zip-code">38107</span>
+                                <span class="zip-pct">29%</span>
+                            </div>
+                            <div class="zip-region" style="top: 45%; left: 80%;">
+                                <span class="zip-code">38112</span>
+                                <span class="zip-pct">27%</span>
+                            </div>
+                            <div class="zip-region" style="top: 60%; left: 35%;">
+                                <span class="zip-code">38114</span>
+                                <span class="zip-pct">26%</span>
+                            </div>
+                            <div class="zip-region" style="top: 65%; left: 55%;">
+                                <span class="zip-code">38106</span>
+                                <span class="zip-pct">30%</span>
+                            </div>
+                            <div class="zip-region" style="top: 55%; left: 70%;">
+                                <span class="zip-code">38112</span>
+                                <span class="zip-pct">35%</span>
+                            </div>
+                            <div class="map-controls">
+                                <button class="map-btn">+</button>
+                                <button class="map-btn">−</button>
+                            </div>
+                        </div>
+                        <div class="map-legend">
+                            <span class="map-legend-label">Low Retention</span>
+                            <div class="map-legend-bar"></div>
+                            <span class="map-legend-label">High Retention</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EJV Score Breakdown -->
+                <div class="card ejv-card">
+                    <div class="card-header">
+                        <h3>EJV SCORE BREAKDOWN</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="ejv-score-circle">
+                            <svg viewBox="0 0 100 100">
+                                <circle class="score-bg" cx="50" cy="50" r="45"/>
+                                <circle class="score-fill" cx="50" cy="50" r="45" 
+                                    stroke-dasharray="283" 
+                                    stroke-dashoffset="82"/>
+                            </svg>
+                            <div class="score-text">
+                                <span class="score-value">71</span>
+                                <span class="score-label">High Impact</span>
+                            </div>
+                        </div>
+                        <div class="ejv-components">
+                            <div class="ejv-component">
+                                <span class="comp-icon">🔄</span>
+                                <span class="comp-name">Local Circulation</span>
+                                <div class="comp-bar"><div class="comp-fill" style="width: 75%"></div></div>
+                                <span class="comp-score">75<span class="comp-max">/100</span></span>
+                            </div>
+                            <div class="ejv-component">
+                                <span class="comp-icon">💼</span>
+                                <span class="comp-name">Jobs & Opportunity</span>
+                                <div class="comp-bar"><div class="comp-fill" style="width: 72%"></div></div>
+                                <span class="comp-score">72<span class="comp-max">/100</span></span>
+                            </div>
+                            <div class="ejv-component">
+                                <span class="comp-icon">🏘️</span>
+                                <span class="comp-name">Community Investment</span>
+                                <div class="comp-bar"><div class="comp-fill" style="width: 68%"></div></div>
+                                <span class="comp-score">68<span class="comp-max">/100</span></span>
+                            </div>
+                            <div class="ejv-component">
+                                <span class="comp-icon">⚖️</span>
+                                <span class="comp-name">Equity & Inclusion</span>
+                                <div class="comp-bar"><div class="comp-fill" style="width: 74%"></div></div>
+                                <span class="comp-score">74<span class="comp-max">/100</span></span>
+                            </div>
+                            <div class="ejv-component">
+                                <span class="comp-icon">🌱</span>
+                                <span class="comp-name">Sustainability</span>
+                                <div class="comp-bar"><div class="comp-fill" style="width: 65%"></div></div>
+                                <span class="comp-score">65<span class="comp-max">/100</span></span>
+                            </div>
+                        </div>
+                        <p class="ejv-note">Scores range from 0 (Low) to 100 (High)</p>
+                    </div>
+                </div>
+
+                <!-- Trend Chart -->
+                <div class="card trend-card">
+                    <div class="card-header">
+                        <h3>TREND: LOCAL RETENTION</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Categories -->
+                <div class="card categories-card">
+                    <div class="card-header">
+                        <h3>TOP LOCAL BUSINESS CATEGORIES (by Spend)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="category-list">
+                            <div class="category-item">
+                                <span class="cat-name">Food & Beverage</span>
+                                <div class="cat-bar"><div class="cat-fill" style="width: 100%"></div></div>
+                                <span class="cat-value">$14.2M</span>
+                            </div>
+                            <div class="category-item">
+                                <span class="cat-name">Health & Wellness</span>
+                                <div class="cat-bar"><div class="cat-fill" style="width: 68%"></div></div>
+                                <span class="cat-value">$9.6M</span>
+                            </div>
+                            <div class="category-item">
+                                <span class="cat-name">Professional Services</span>
+                                <div class="cat-bar"><div class="cat-fill" style="width: 58%"></div></div>
+                                <span class="cat-value">$8.3M</span>
+                            </div>
+                            <div class="category-item">
+                                <span class="cat-name">Retail</span>
+                                <div class="cat-bar"><div class="cat-fill" style="width: 47%"></div></div>
+                                <span class="cat-value">$6.7M</span>
+                            </div>
+                            <div class="category-item">
+                                <span class="cat-name">Home Services</span>
+                                <div class="cat-bar"><div class="cat-fill" style="width: 35%"></div></div>
+                                <span class="cat-value">$4.9M</span>
+                            </div>
+                        </div>
+                        <a href="#" class="view-all-link">View all categories →</a>
+                    </div>
+                </div>
+
+                <!-- Insights & Alerts -->
+                <div class="card insights-card">
+                    <div class="card-header">
+                        <h3>INSIGHTS & ALERTS</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="insight-list">
+                            <div class="insight-item positive">
+                                <span class="insight-icon">📈</span>
+                                <div class="insight-content">
+                                    <p class="insight-text">Local retention improved 4.3 points from last month. Great job, Memphis!</p>
+                                </div>
+                                <span class="insight-time">2h ago</span>
+                            </div>
+                            <div class="insight-item warning">
+                                <span class="insight-icon">⚠️</span>
+                                <div class="insight-content">
+                                    <p class="insight-text">Leakage to outside the region is high in ZIP 38108. Explore local business opportunities.</p>
+                                </div>
+                                <span class="insight-time">3h ago</span>
+                            </div>
+                            <div class="insight-item info">
+                                <span class="insight-icon">🏆</span>
+                                <div class="insight-content">
+                                    <p class="insight-text">EJV Score is High Impact! Keep building economic justice together.</p>
+                                </div>
+                                <span class="insight-time">4h ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <div class="footer-left">
+                    <span class="footer-logo">🌐</span>
+                    <span class="footer-tagline">DATA. INSIGHT. IMPACT.</span>
+                </div>
+                <div class="footer-center">
+                    <p><strong>FIX$</strong> helps communities make informed decisions that build wealth, opportunity, and resilience.</p>
+                </div>
+                <div class="footer-right">
+                    <p>Community Intelligence for Economic Justice.</p>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
