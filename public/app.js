@@ -1378,50 +1378,67 @@ function estimateZipCoords(zip) {
  */
 async function fetchStoresFromOverpass(storeName, zip) {
     try {
-        // First, get the ZIP code bounds
-        const zipCoords = ZIP_DATA[zip] || await geocodeZip(zip);
+        // First, geocode the ZIP code to get accurate coordinates
+        let zipCoords;
+        if (ZIP_DATA[zip]) {
+            zipCoords = ZIP_DATA[zip];
+        } else {
+            zipCoords = await geocodeZip(zip);
+        }
+        
         const lat = zipCoords.lat;
         const lng = zipCoords.lng;
         
-        // Search radius ~10km around the ZIP centroid
-        const radius = 10000;
+        console.log(`Searching Overpass near ZIP ${zip}: lat=${lat}, lng=${lng}`);
         
-        // Map store names to OSM brand names
+        // Larger search radius ~25km to find more stores
+        const radius = 25000;
+        
+        // Map store names to OSM brand names and common variations
         const osmBrandMap = {
-            'walmart': 'Walmart',
-            'costco': 'Costco',
-            'target': 'Target',
-            'kroger': 'Kroger',
-            'publix': 'Publix',
-            'whole_foods': 'Whole Foods Market',
-            'trader_joes': "Trader Joe's",
-            'aldi': 'ALDI',
-            'cvs': 'CVS',
-            'walgreens': 'Walgreens',
-            'home_depot': 'The Home Depot',
-            'lowes': "Lowe's",
-            'starbucks': 'Starbucks',
-            'mcdonalds': "McDonald's",
-            'chipotle': 'Chipotle',
-            '7_eleven': '7-Eleven',
-            'wawa': 'Wawa',
-            'safeway': 'Safeway',
-            'wegmans': 'Wegmans'
+            'walmart': ['Walmart', 'Walmart Supercenter', 'Walmart Neighborhood Market'],
+            'costco': ['Costco', 'Costco Wholesale'],
+            'target': ['Target'],
+            'kroger': ['Kroger'],
+            'publix': ['Publix'],
+            'whole_foods': ['Whole Foods', 'Whole Foods Market'],
+            'trader_joes': ["Trader Joe's", "Trader Joes"],
+            'aldi': ['ALDI', 'Aldi'],
+            'cvs': ['CVS', 'CVS Pharmacy'],
+            'walgreens': ['Walgreens'],
+            'home_depot': ['The Home Depot', 'Home Depot'],
+            'lowes': ["Lowe's", "Lowes", "Lowe's Home Improvement"],
+            'starbucks': ['Starbucks', 'Starbucks Coffee'],
+            'mcdonalds': ["McDonald's", "McDonalds"],
+            'chipotle': ['Chipotle', 'Chipotle Mexican Grill'],
+            '7_eleven': ['7-Eleven', '7 Eleven'],
+            'wawa': ['Wawa'],
+            'safeway': ['Safeway'],
+            'wegmans': ['Wegmans'],
+            'sams_club': ["Sam's Club", "Sams Club"],
+            'best_buy': ['Best Buy'],
+            'apple': ['Apple Store', 'Apple'],
+            'chick_fil_a': ['Chick-fil-A', 'Chick fil A']
         };
         
-        const brand = osmBrandMap[storeName.toLowerCase()] || storeName;
+        // Get brand names to search for
+        const brandNames = osmBrandMap[storeName.toLowerCase()] || [storeName];
+        const brandRegex = brandNames.join('|');
         
-        // Overpass API query for stores with this brand name
+        // Overpass API query - search for brand OR name containing any variation
         const query = `
-            [out:json][timeout:10];
+            [out:json][timeout:25];
             (
-                node["brand"~"${brand}",i](around:${radius},${lat},${lng});
-                node["name"~"${brand}",i](around:${radius},${lat},${lng});
-                way["brand"~"${brand}",i](around:${radius},${lat},${lng});
-                way["name"~"${brand}",i](around:${radius},${lat},${lng});
+                node["brand"~"${brandRegex}",i](around:${radius},${lat},${lng});
+                node["name"~"${brandRegex}",i](around:${radius},${lat},${lng});
+                way["brand"~"${brandRegex}",i](around:${radius},${lat},${lng});
+                way["name"~"${brandRegex}",i](around:${radius},${lat},${lng});
+                relation["brand"~"${brandRegex}",i](around:${radius},${lat},${lng});
             );
-            out center;
+            out center body;
         `;
+        
+        console.log('Overpass query:', query);
         
         const response = await fetch('https://overpass-api.de/api/interpreter', {
             method: 'POST',
@@ -1430,42 +1447,82 @@ async function fetchStoresFromOverpass(storeName, zip) {
         });
         
         if (!response.ok) {
-            console.warn('Overpass API error:', response.status);
+            console.error('Overpass API error:', response.status, response.statusText);
+            addInsight('warning', `Overpass API returned status ${response.status}`);
             return [];
         }
         
         const data = await response.json();
+        console.log('Overpass raw response:', data);
         
-        // Parse results
+        if (!data.elements || data.elements.length === 0) {
+            console.log(`No ${storeName} stores found via Overpass API within ${radius/1000}km`);
+            return [];
+        }
+        
+        // Parse results - extract coordinates from nodes, ways, and relations
         const stores = data.elements.map(element => {
             let storeLat, storeLng;
             
+            // Handle different element types
             if (element.type === 'node') {
                 storeLat = element.lat;
                 storeLng = element.lon;
-            } else if (element.center) {
-                storeLat = element.center.lat;
-                storeLng = element.center.lon;
+            } else if (element.type === 'way' || element.type === 'relation') {
+                // Ways and relations need center coordinates
+                if (element.center) {
+                    storeLat = element.center.lat;
+                    storeLng = element.center.lon;
+                } else if (element.bounds) {
+                    // Calculate center from bounds
+                    storeLat = (element.bounds.minlat + element.bounds.maxlat) / 2;
+                    storeLng = (element.bounds.minlon + element.bounds.maxlon) / 2;
+                } else {
+                    console.warn('Element has no coordinates:', element);
+                    return null;
+                }
             } else {
                 return null;
             }
             
+            // Validate coordinates
+            if (typeof storeLat !== 'number' || typeof storeLng !== 'number' || 
+                isNaN(storeLat) || isNaN(storeLng)) {
+                console.warn('Invalid coordinates for element:', element);
+                return null;
+            }
+            
+            const tags = element.tags || {};
+            
             return {
                 lat: storeLat,
                 lng: storeLng,
-                name: element.tags?.name || brand,
-                address: element.tags?.['addr:street'] || '',
-                city: element.tags?.['addr:city'] || '',
+                name: tags.name || tags.brand || brandNames[0],
+                address: tags['addr:housenumber'] 
+                    ? `${tags['addr:housenumber']} ${tags['addr:street'] || ''}`
+                    : tags['addr:street'] || '',
+                city: tags['addr:city'] || '',
+                state: tags['addr:state'] || '',
                 osmId: element.id,
+                osmType: element.type,
                 fromOverpass: true
             };
         }).filter(s => s !== null);
         
-        console.log(`Found ${stores.length} ${brand} locations via Overpass API`);
+        console.log(`Found ${stores.length} ${brandNames[0]} locations via Overpass API`);
+        
+        // Sort by distance from ZIP centroid
+        stores.sort((a, b) => {
+            const distA = Math.sqrt(Math.pow(a.lat - lat, 2) + Math.pow(a.lng - lng, 2));
+            const distB = Math.sqrt(Math.pow(b.lat - lat, 2) + Math.pow(b.lng - lng, 2));
+            return distA - distB;
+        });
+        
         return stores;
         
     } catch (error) {
-        console.warn('Overpass API fetch failed:', error);
+        console.error('Overpass API fetch failed:', error);
+        addInsight('warning', `Store search failed: ${error.message}`);
         return [];
     }
 }
@@ -1508,24 +1565,40 @@ function showOverpassStoresOnMap(stores, highlightZip = null) {
         return;
     }
     
-    stores.forEach(store => {
+    console.log('Displaying Overpass stores on map:', stores);
+    
+    stores.forEach((store, index) => {
         const retention = store.calculatedRetention || getStoreCalculatedRetention(store);
         const color = getRetentionColor(retention);
+        
+        console.log(`Store ${index + 1}: ${store.name} at (${store.lat}, ${store.lng})`);
+        
+        // Validate coordinates before creating marker
+        if (typeof store.lat !== 'number' || typeof store.lng !== 'number') {
+            console.warn('Invalid store coordinates:', store);
+            return;
+        }
         
         // Use custom icon marker
         const marker = createStoreMarker(store.lat, store.lng, store, retention, false);
         marker.addTo(map);
         
         const icon = getStoreIcon(store.company, COMPANY_CATEGORY[store.company]);
-        const addressLine = store.address ? `<span style="font-size:10px;color:#666;">${store.address}</span><br>` : '';
+        const addressParts = [store.address, store.city, store.state].filter(Boolean);
+        const addressLine = addressParts.length > 0 
+            ? `<span style="font-size:10px;color:#666;">${addressParts.join(', ')}</span><br>` 
+            : '';
         
         marker.bindPopup(`
-            <div style="text-align:center;min-width:180px;">
+            <div style="text-align:center;min-width:200px;">
                 <div style="font-size:24px;margin-bottom:5px;">${icon}</div>
                 <strong style="font-size:14px;">${store.name}</strong><br>
-                <span style="font-size:10px;color:#666;">${store.companyName}</span><br>
+                <span style="font-size:10px;color:#666;">${store.companyName || ''}</span><br>
                 ${addressLine}
-                <span style="font-size:10px;color:#2e7d32;">📍 Real location from OSM</span><br>
+                <div style="background:#e8f5e9;padding:4px 8px;border-radius:4px;margin:6px 0;">
+                    <span style="font-size:10px;color:#2e7d32;">📍 Real OSM Location</span><br>
+                    <span style="font-size:9px;color:#666;">${store.lat.toFixed(5)}, ${store.lng.toFixed(5)}</span>
+                </div>
                 <span style="font-size:22px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
                 <span style="font-size:11px;color:#666;">Local Retention (LC)</span><br>
                 <span style="font-size:10px;color:#999;">Click for EJV analysis</span>
@@ -1555,6 +1628,8 @@ function showOverpassStoresOnMap(stores, highlightZip = null) {
         // Update chart
         const avgRetention = stores.reduce((sum, s) => sum + (s.calculatedRetention || 30), 0) / stores.length;
         updateEconomicFlowWithRetention(avgRetention);
+        
+        addInsight('positive', `Showing ${markers.length} verified location(s) from OpenStreetMap`);
     }
 }
 
