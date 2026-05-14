@@ -357,7 +357,9 @@ function createStoreMarker(lat, lng, store, retention, isHighlighted = false) {
     const company = store.company || '';
     const category = COMPANY_CATEGORY[company] || 'default';
     const icon = getStoreIcon(company, category);
-    const color = getRetentionColor(retention);
+    // Ensure retention is a valid number
+    const retentionVal = typeof retention === 'number' && !isNaN(retention) ? retention : 30;
+    const color = getRetentionColor(retentionVal);
     const size = isHighlighted ? 50 : 42;
     const borderColor = isHighlighted ? '#1a3d16' : color;
     
@@ -396,7 +398,7 @@ function createStoreMarker(lat, lng, store, retention, isHighlighted = false) {
                     border-radius: 10px;
                     white-space: nowrap;
                     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                ">${retention.toFixed(0)}%</div>
+                ">${Math.round(retentionVal)}%</div>
             </div>
         `,
         iconSize: [size, size + 18],
@@ -411,7 +413,9 @@ function createStoreMarker(lat, lng, store, retention, isHighlighted = false) {
  * Create a location pin marker for ZIP searches
  */
 function createLocationMarker(lat, lng, retention, displayName) {
-    const color = getRetentionColor(retention);
+    // Ensure retention is a valid number
+    const retentionVal = typeof retention === 'number' && !isNaN(retention) ? retention : 30;
+    const color = getRetentionColor(retentionVal);
     
     const customIcon = L.divIcon({
         className: 'custom-location-marker',
@@ -439,7 +443,7 @@ function createLocationMarker(lat, lng, retention, displayName) {
                         font-size: 18px;
                         font-weight: bold;
                         color: white;
-                    ">${retention.toFixed(0)}%</span>
+                    ">${Math.round(retentionVal)}%</span>
                 </div>
                 <div style="
                     position: absolute;
@@ -1400,6 +1404,9 @@ async function geocodeZip(zip) {
 }
 
 function addSearchedZipMarker(zip, retention, storeName = null) {
+    // Ensure retention is a valid number
+    const retentionVal = typeof retention === 'number' && !isNaN(retention) ? retention : 30;
+    
     // Get coordinates - use predefined if available, otherwise geocode
     let coords = ZIP_DATA[zip];
     let isEstimated = false;
@@ -1409,7 +1416,7 @@ function addSearchedZipMarker(zip, retention, storeName = null) {
         geocodeZip(zip).then(geocodedCoords => {
             // Update the marker with accurate coordinates
             if (geocodedCoords.geocoded) {
-                updateMarkerLocation(geocodedCoords, retention, storeName, zip);
+                updateMarkerLocation(geocodedCoords, retentionVal, storeName, zip);
                 // Cache for future use
                 ZIP_DATA[zip] = { 
                     ...geocodedCoords, 
@@ -1429,11 +1436,11 @@ function addSearchedZipMarker(zip, retention, storeName = null) {
     
     clearMapMarkers();
     
-    const color = getRetentionColor(retention);
+    const color = getRetentionColor(retentionVal);
     const displayName = storeName || `ZIP ${zip}`;
     
     // Use custom location marker instead of circle
-    const marker = createLocationMarker(coords.lat, coords.lng, retention, displayName);
+    const marker = createLocationMarker(coords.lat, coords.lng, retentionVal, displayName);
     marker.addTo(map);
     
     const locationNote = isEstimated ? `<br><span style="font-size:10px;color:#999;">(Updating location...)</span>` : '';
@@ -1445,20 +1452,18 @@ function addSearchedZipMarker(zip, retention, storeName = null) {
             <strong style="font-size:14px;">${displayName}</strong><br>
             <span style="font-size:11px;color:#666;">${locationName}</span><br>
             <span style="font-size:12px;color:#666;">ZIP: ${zip}</span>${locationNote}<br>
-            <span style="font-size:26px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
+            <span style="font-size:26px;font-weight:bold;color:${color}">${retentionVal.toFixed(1)}%</span><br>
             <span style="font-size:12px;color:#666;">Local Retention</span>
         </div>
     `).openPopup();
     
-    // Permanent label
-    marker.bindTooltip(`<b>${zip}</b><br>${retention.toFixed(0)}%`, {
     markers.push(marker);
     
     // Center map on this location
     map.setView([coords.lat, coords.lng], 12);
     
     // Update economic flow chart to match retention
-    updateEconomicFlowWithRetention(retention);
+    updateEconomicFlowWithRetention(retentionVal);
     
     return coords;
 }
@@ -1467,13 +1472,16 @@ function addSearchedZipMarker(zip, retention, storeName = null) {
  * Update marker location after geocoding completes
  */
 function updateMarkerLocation(coords, retention, storeName, zip) {
+    // Ensure retention is a valid number
+    const retentionVal = typeof retention === 'number' && !isNaN(retention) ? retention : 30;
+    
     clearMapMarkers();
     
-    const color = getRetentionColor(retention);
+    const color = getRetentionColor(retentionVal);
     const displayName = storeName || `ZIP ${zip}`;
     
     // Use custom location marker
-    const marker = createLocationMarker(coords.lat, coords.lng, retention, displayName);
+    const marker = createLocationMarker(coords.lat, coords.lng, retentionVal, displayName);
     marker.addTo(map);
     
     marker.bindPopup(`
@@ -1482,7 +1490,7 @@ function updateMarkerLocation(coords, retention, storeName, zip) {
             <strong style="font-size:14px;">${displayName}</strong><br>
             <span style="font-size:11px;color:#2e7d32;">${coords.name || 'Location verified'}</span><br>
             <span style="font-size:12px;color:#666;">ZIP: ${zip}</span><br>
-            <span style="font-size:26px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
+            <span style="font-size:26px;font-weight:bold;color:${color}">${retentionVal.toFixed(1)}%</span><br>
             <span style="font-size:12px;color:#666;">Local Retention</span>
         </div>
     `).openPopup();
@@ -1491,7 +1499,7 @@ function updateMarkerLocation(coords, retention, storeName, zip) {
     map.setView([coords.lat, coords.lng], 12);
     
     // Update economic flow chart to match retention
-    updateEconomicFlowWithRetention(retention);
+    updateEconomicFlowWithRetention(retentionVal);
     
     addInsight('positive', `Location verified: ${coords.name || zip}`);
 }
@@ -1701,10 +1709,13 @@ async function showStoresOnMap(stores, highlightZip = null, currentResult = null
 function updateEconomicFlowWithRetention(retention) {
     if (!economicFlowChart) return;
     
+    // Ensure retention is a valid number
+    const retentionVal = typeof retention === 'number' && !isNaN(retention) ? retention : 30;
+    
     // Calculate flow distribution based on retention
-    const localBusiness = retention;
-    const localLeakage = Math.min(30, 100 - retention) * 0.4;
-    const outsideRegional = Math.min(25, 100 - retention - localLeakage) * 0.3;
+    const localBusiness = retentionVal;
+    const localLeakage = Math.min(30, 100 - retentionVal) * 0.4;
+    const outsideRegional = Math.min(25, 100 - retentionVal - localLeakage) * 0.3;
     const outsideState = 100 - localBusiness - localLeakage - outsideRegional;
     
     economicFlowChart.data.datasets[0].data = [
