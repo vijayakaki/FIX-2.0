@@ -2,6 +2,10 @@
   "version": 2,
   "builds": [
     {
+      "src": "api/overpass.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "api/index.py",
       "use": "@vercel/python"
     },
@@ -21,7 +25,7 @@
     },
     {
       "src": "/api/overpass",
-      "dest": "/api/index.py"
+      "dest": "/api/overpass.js"
     },
     {
       "src": "/api/(.*)",
