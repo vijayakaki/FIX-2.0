@@ -423,6 +423,20 @@ body {
 .map-legend-bar { width: 120px; height: 10px; background: linear-gradient(90deg, #f44336, #ff9800, #ffeb3b, #cddc39, #8bc34a, #4caf50, #2e7d32); border-radius: 5px; }
 .map-legend-label { font-size: 0.7rem; color: var(--text-muted); }
 
+/* Custom Store Markers */
+.custom-store-marker, .custom-location-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+.custom-store-marker > div, .custom-location-marker > div {
+    transition: transform 0.2s ease;
+}
+
+.custom-store-marker:hover > div, .custom-location-marker:hover > div {
+    transform: scale(1.1);
+}
+
 /* ZIP Tooltip - Styled like dashboard image */
 .zip-tooltip { 
     background: transparent !important; 

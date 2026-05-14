@@ -257,6 +257,42 @@ const COMPANY_NAMES = {
     'worker_cooperative': 'Worker Co-op'
 };
 
+// Store symbols/icons by category
+const STORE_ICONS = {
+    'supermarket': '🛒',
+    'warehouse_club': '📦',
+    'department_store': '🏬',
+    'pharmacy': '💊',
+    'convenience': '🏪',
+    'home_improvement': '🔨',
+    'coffee_shop': '☕',
+    'fast_food': '🍔',
+    'fast_casual': '🌯',
+    'local_grocery': '🥬',
+    'worker_cooperative': '🤝',
+    'restaurant': '🍽️',
+    'default': '📍'
+};
+
+// Company-specific icons (override category icons)
+const COMPANY_ICONS = {
+    'costco': '📦',
+    'walmart': '🛒',
+    'target': '🎯',
+    'starbucks': '☕',
+    'mcdonalds': '🍟',
+    'home_depot': '🧱',
+    'cvs': '💊',
+    'walgreens': '💊',
+    'whole_foods': '🥗',
+    'trader_joes': '🛍️',
+    'chipotle': '🌯',
+    '7_eleven': '🏪',
+    'wawa': '⛽',
+    'local_grocery': '🥬',
+    'worker_cooperative': '🤝'
+};
+
 // Impact band definitions
 const IMPACT_BANDS = {
     community_anchor: { min: 80, emoji: '🟢', label: 'Community Anchor', color: '#2e7d32' },
@@ -308,6 +344,131 @@ function getRetentionColor(retention) {
 }
 
 /**
+ * Get store icon based on company or category
+ */
+function getStoreIcon(company, category) {
+    return COMPANY_ICONS[company] || STORE_ICONS[category] || STORE_ICONS.default;
+}
+
+/**
+ * Create a custom marker icon with emoji and retention badge
+ */
+function createStoreMarker(lat, lng, store, retention, isHighlighted = false) {
+    const company = store.company || '';
+    const category = COMPANY_CATEGORY[company] || 'default';
+    const icon = getStoreIcon(company, category);
+    const color = getRetentionColor(retention);
+    const size = isHighlighted ? 50 : 42;
+    const borderColor = isHighlighted ? '#1a3d16' : color;
+    
+    // Create custom div icon with emoji and retention badge
+    const customIcon = L.divIcon({
+        className: 'custom-store-marker',
+        html: `
+            <div style="
+                position: relative;
+                width: ${size}px;
+                height: ${size + 18}px;
+                text-align: center;
+            ">
+                <div style="
+                    width: ${size}px;
+                    height: ${size}px;
+                    background: white;
+                    border: 3px solid ${borderColor};
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: ${size * 0.5}px;
+                    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+                ">${icon}</div>
+                <div style="
+                    position: absolute;
+                    bottom: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: ${color};
+                    color: white;
+                    font-size: 10px;
+                    font-weight: bold;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    white-space: nowrap;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                ">${retention.toFixed(0)}%</div>
+            </div>
+        `,
+        iconSize: [size, size + 18],
+        iconAnchor: [size / 2, size + 9],
+        popupAnchor: [0, -size]
+    });
+    
+    return L.marker([lat, lng], { icon: customIcon });
+}
+
+/**
+ * Create a location pin marker for ZIP searches
+ */
+function createLocationMarker(lat, lng, retention, displayName) {
+    const color = getRetentionColor(retention);
+    
+    const customIcon = L.divIcon({
+        className: 'custom-location-marker',
+        html: `
+            <div style="
+                position: relative;
+                width: 50px;
+                height: 68px;
+                text-align: center;
+            ">
+                <div style="
+                    width: 50px;
+                    height: 50px;
+                    background: ${color};
+                    border: 3px solid white;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+                ">
+                    <span style="
+                        transform: rotate(45deg);
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: white;
+                    ">${retention.toFixed(0)}%</span>
+                </div>
+                <div style="
+                    position: absolute;
+                    bottom: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    font-size: 9px;
+                    font-weight: bold;
+                    color: #333;
+                    background: white;
+                    padding: 2px 4px;
+                    border-radius: 3px;
+                    white-space: nowrap;
+                    max-width: 80px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                ">📍</div>
+            </div>
+        `,
+        iconSize: [50, 68],
+        iconAnchor: [25, 68],
+        popupAnchor: [0, -55]
+    });
+    
+    return L.marker([lat, lng], { icon: customIcon });
+}
+
+/**
  * Add ZIP code markers to map with Local Retention %
  */
 function addZipMarkers(zipCodes) {
@@ -319,30 +480,19 @@ function addZipMarkers(zipCodes) {
         const retention = coords.retention || 30;
         const color = getRetentionColor(retention);
         
-        const marker = L.circleMarker([coords.lat, coords.lng], {
-            radius: 28,
-            fillColor: color,
-            color: '#fff',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.85
-        }).addTo(map);
+        // Use custom location marker
+        const marker = createLocationMarker(coords.lat, coords.lng, retention, `ZIP ${zip}`);
+        marker.addTo(map);
         
         marker.bindPopup(`
-            <div style="text-align:center;min-width:120px;">
+            <div style="text-align:center;min-width:140px;">
+                <div style="font-size:24px;margin-bottom:5px;">📍</div>
                 <strong style="font-size:14px;">ZIP: ${zip}</strong><br>
-                <span style="font-size:18px;font-weight:bold;color:${color}">${retention}%</span><br>
+                <span style="font-size:22px;font-weight:bold;color:${color}">${retention}%</span><br>
                 <span style="font-size:12px;color:#666;">Local Retention</span><br>
                 <a href="#" onclick="searchZip('${zip}');return false;" style="color:#2d5a27;">View Details →</a>
             </div>
         `);
-        
-        // Permanent label showing ZIP and retention %
-        marker.bindTooltip(`<b>${zip}</b><br>${retention}%`, {
-            permanent: true,
-            direction: 'center',
-            className: 'zip-tooltip'
-        });
         
         markers.push(marker);
     });
@@ -370,35 +520,41 @@ function addStoreMarkers(stores, highlightZip = null) {
     clearMapMarkers();
     
     stores.forEach(store => {
-        const color = getRetentionColor(store.retention);
+        const retention = store.retention || getStoreCalculatedRetention(store);
+        const color = getRetentionColor(retention);
         const isHighlighted = highlightZip && store.zip === highlightZip;
         
-        const marker = L.circleMarker([store.lat, store.lng], {
-            radius: isHighlighted ? 32 : 26,
-            fillColor: color,
-            color: isHighlighted ? '#1a3d16' : '#fff',
-            weight: isHighlighted ? 3 : 2,
-            opacity: 1,
-            fillOpacity: 0.9
-        }).addTo(map);
+        // Use custom store marker with icons
+        const storeData = {
+            ...store,
+            company: store.company || 'default'
+        };
+        const marker = createStoreMarker(store.lat, store.lng, storeData, retention, isHighlighted);
+        marker.addTo(map);
         
         const localBadge = store.isLocal ? '<span style="background:#4caf50;color:white;padding:2px 6px;border-radius:4px;font-size:10px;">LOCAL</span><br>' : '';
+        const icon = getStoreIcon(store.company, COMPANY_CATEGORY[store.company]);
         
         marker.bindPopup(`
-            <div style="text-align:center;min-width:150px;">
+            <div style="text-align:center;min-width:160px;">
                 ${localBadge}
-                <strong style="font-size:13px;">${store.name}</strong><br>
+                <div style="font-size:24px;margin-bottom:5px;">${icon}</div>
+                <strong style="font-size:14px;">${store.name}</strong><br>
                 <span style="font-size:11px;color:#666;">ZIP: ${store.zip}</span><br>
-                <span style="font-size:20px;font-weight:bold;color:${color}">${store.retention}%</span><br>
+                <span style="font-size:22px;font-weight:bold;color:${color}">${retention.toFixed ? retention.toFixed(1) : retention}%</span><br>
                 <span style="font-size:11px;color:#666;">Local Retention</span>
             </div>
         `);
         
-        // Permanent label
-        marker.bindTooltip(`<b>${store.name.split(' ')[0]}</b><br>${store.retention}%`, {
-            permanent: true,
-            direction: 'center',
-            className: 'zip-tooltip'
+        // Add click handler
+        marker.on('click', async () => {
+            const result = await calculateEJV({
+                zip_code: store.zip,
+                store_name: store.name,
+                company_name: store.company,
+                is_local_business: store.isLocal || false
+            });
+            displayResults(result);
         });
         
         markers.push(marker);
@@ -1274,35 +1430,28 @@ function addSearchedZipMarker(zip, retention, storeName = null) {
     clearMapMarkers();
     
     const color = getRetentionColor(retention);
-    
-    const marker = L.circleMarker([coords.lat, coords.lng], {
-        radius: 35,
-        fillColor: color,
-        color: '#1a3d16',
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 0.9
-    }).addTo(map);
-    
     const displayName = storeName || `ZIP ${zip}`;
-    const locationNote = isEstimated ? `<br><span style="font-size:10px;color:#999;">(Approx. location)</span>` : '';
+    
+    // Use custom location marker instead of circle
+    const marker = createLocationMarker(coords.lat, coords.lng, retention, displayName);
+    marker.addTo(map);
+    
+    const locationNote = isEstimated ? `<br><span style="font-size:10px;color:#999;">(Updating location...)</span>` : '';
+    const locationName = coords.name || (ZIP_DATA[zip] ? ZIP_DATA[zip].name : 'Location');
     
     marker.bindPopup(`
-        <div style="text-align:center;min-width:140px;">
+        <div style="text-align:center;min-width:160px;">
+            <div style="font-size:24px;margin-bottom:5px;">📍</div>
             <strong style="font-size:14px;">${displayName}</strong><br>
+            <span style="font-size:11px;color:#666;">${locationName}</span><br>
             <span style="font-size:12px;color:#666;">ZIP: ${zip}</span>${locationNote}<br>
-            <span style="font-size:24px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
+            <span style="font-size:26px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
             <span style="font-size:12px;color:#666;">Local Retention</span>
         </div>
     `).openPopup();
     
     // Permanent label
     marker.bindTooltip(`<b>${zip}</b><br>${retention.toFixed(0)}%`, {
-        permanent: true,
-        direction: 'center',
-        className: 'zip-tooltip'
-    });
-    
     markers.push(marker);
     
     // Center map on this location
@@ -1321,33 +1470,22 @@ function updateMarkerLocation(coords, retention, storeName, zip) {
     clearMapMarkers();
     
     const color = getRetentionColor(retention);
-    
-    const marker = L.circleMarker([coords.lat, coords.lng], {
-        radius: 35,
-        fillColor: color,
-        color: '#1a3d16',
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 0.9
-    }).addTo(map);
-    
     const displayName = storeName || `ZIP ${zip}`;
     
+    // Use custom location marker
+    const marker = createLocationMarker(coords.lat, coords.lng, retention, displayName);
+    marker.addTo(map);
+    
     marker.bindPopup(`
-        <div style="text-align:center;min-width:140px;">
+        <div style="text-align:center;min-width:160px;">
+            <div style="font-size:24px;margin-bottom:5px;">📍</div>
             <strong style="font-size:14px;">${displayName}</strong><br>
+            <span style="font-size:11px;color:#2e7d32;">${coords.name || 'Location verified'}</span><br>
             <span style="font-size:12px;color:#666;">ZIP: ${zip}</span><br>
-            <span style="font-size:10px;color:#2e7d32;">${coords.name || 'Location verified'}</span><br>
-            <span style="font-size:24px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
+            <span style="font-size:26px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
             <span style="font-size:12px;color:#666;">Local Retention</span>
         </div>
     `).openPopup();
-    
-    marker.bindTooltip(`<b>${zip}</b><br>${retention.toFixed(0)}%`, {
-        permanent: true,
-        direction: 'center',
-        className: 'zip-tooltip'
-    });
     
     markers.push(marker);
     map.setView([coords.lat, coords.lng], 12);
@@ -1508,34 +1646,26 @@ async function showStoresOnMap(stores, highlightZip = null, currentResult = null
         const color = getRetentionColor(retention);
         const isHighlighted = highlightZip && store.zip === highlightZip;
         
-        const marker = L.circleMarker([store.lat, store.lng], {
-            radius: isHighlighted ? 32 : 26,
-            fillColor: color,
-            color: isHighlighted ? '#1a3d16' : '#fff',
-            weight: isHighlighted ? 3 : 2,
-            opacity: 1,
-            fillOpacity: 0.9
-        }).addTo(map);
+        // Use custom icon marker instead of circle
+        const marker = createStoreMarker(store.lat, store.lng, store, retention, isHighlighted);
+        marker.addTo(map);
         
         const localBadge = store.isLocal ? '<span style="background:#4caf50;color:white;padding:2px 6px;border-radius:4px;font-size:10px;">LOCAL</span><br>' : '';
         const companyBadge = store.companyName ? `<span style="font-size:10px;color:#666;">${store.companyName}</span><br>` : '';
+        const icon = getStoreIcon(store.company, COMPANY_CATEGORY[store.company]);
         
         marker.bindPopup(`
-            <div style="text-align:center;min-width:150px;">
+            <div style="text-align:center;min-width:160px;">
                 ${localBadge}
-                <strong style="font-size:13px;">${store.name}</strong><br>
+                <div style="font-size:24px;margin-bottom:5px;">${icon}</div>
+                <strong style="font-size:14px;">${store.name}</strong><br>
                 ${companyBadge}
                 <span style="font-size:11px;color:#666;">ZIP: ${store.zip}</span><br>
-                <span style="font-size:20px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
-                <span style="font-size:11px;color:#666;">Local Retention (LC)</span>
+                <span style="font-size:22px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
+                <span style="font-size:11px;color:#666;">Local Retention (LC)</span><br>
+                <span style="font-size:10px;color:#999;margin-top:5px;display:block;">Click for full EJV analysis</span>
             </div>
         `);
-        
-        marker.bindTooltip(`<b>${store.name.split(' ')[0]}</b><br>${retention.toFixed(0)}%`, {
-            permanent: true,
-            direction: 'center',
-            className: 'zip-tooltip'
-        });
         
         // Add click handler to update sidebar with this store's data
         marker.on('click', async () => {
