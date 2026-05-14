@@ -1,0 +1,6 @@
+# FIX$ GeoEquity Impact Engine - EJV 4.1
+# Python dependencies for Vercel deployment
+
+flask>=2.3.0
+flask-cors>=4.0.0
+requests>=2.31.0
