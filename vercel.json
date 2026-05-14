@@ -20,6 +20,10 @@
       "dest": "/public/app.js"
     },
     {
+      "src": "/api/overpass",
+      "dest": "/api/index.py"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.py"
     },

@@ -1077,11 +1077,18 @@ def api_overpass_proxy():
         return response
     
     try:
-        data = request.get_json()
-        query = data.get("query") if data else None
+        # Force JSON parsing even if content-type header is not set correctly
+        data = request.get_json(force=True, silent=True) or {}
+        query = data.get("query")
+        
+        # Also try form data or raw body
+        if not query:
+            query = request.form.get("query")
+        if not query:
+            query = request.data.decode("utf-8") if request.data else None
         
         if not query:
-            return jsonify({"error": "Missing query parameter"}), 400
+            return jsonify({"error": "Missing query parameter", "received": str(data)}), 400
         
         # Forward request to Overpass API
         overpass_response = http_requests.post(
@@ -1107,7 +1114,8 @@ def api_overpass_proxy():
     except http_requests.exceptions.RequestException as e:
         return jsonify({"error": f"Request failed: {str(e)}"}), 502
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
 
 
 # =============================================================================
