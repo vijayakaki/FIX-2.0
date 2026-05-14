@@ -1441,7 +1441,7 @@ async function fetchStoresFromOverpass(storeName, zip) {
         console.log('Overpass query:', query);
         
         // Use local proxy to avoid CORS issues
-        const response = await fetch('/proxy/overpass', {
+        const response = await fetch('/api/proxy/overpass', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query })

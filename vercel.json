@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/overpass.js",
+      "src": "api/proxy/overpass.js",
       "use": "@vercel/node"
     },
     {
@@ -24,8 +24,8 @@
       "dest": "/public/app.js"
     },
     {
-      "src": "/proxy/overpass",
-      "dest": "/api/overpass.js"
+      "src": "/api/proxy/overpass",
+      "dest": "/api/proxy/overpass.js"
     },
     {
       "src": "/api/(.*)",
