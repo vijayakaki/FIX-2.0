@@ -788,7 +788,68 @@ function updateCharts(ejvScore, zipCode = null) {
     const outsideState = (100 - parseFloat(localBusinesses)) * 0.25; // ~25% of remainder
     
     if (economicFlowChart) {
-        economicFlowChart.data.datasets[0].data = [\n            parseFloat(localBusinesses), \n            localLeakage, \n            outsideRegional, \n            outsideState\n        ];\n        economicFlowChart.update();\n    }\n    \n    // Update legend with accurate values\n    const localAmt = (totalSpend * parseFloat(localBusinesses) / 100).toFixed(1);\n    const leakageAmt = (totalSpend * localLeakage / 100).toFixed(1);\n    const regionalAmt = (totalSpend * outsideRegional / 100).toFixed(1);\n    const stateAmt = (totalSpend * outsideState / 100).toFixed(1);\n    \n    document.getElementById('legendLocal').textContent = `${localBusinesses}%`;\n    document.getElementById('legendLocalAmt').textContent = `$${localAmt}M`;\n    document.getElementById('legendLeakage').textContent = `${localLeakage.toFixed(1)}%`;\n    document.getElementById('legendLeakageAmt').textContent = `$${leakageAmt}M`;\n    document.getElementById('legendRegional').textContent = `${outsideRegional.toFixed(1)}%`;\n    document.getElementById('legendRegionalAmt').textContent = `$${regionalAmt}M`;\n    document.getElementById('legendState').textContent = `${outsideState.toFixed(1)}%`;\n    document.getElementById('legendStateAmt').textContent = `$${stateAmt}M`;\n    document.getElementById('donutValue').textContent = `$${totalSpend.toFixed(1)}M`;\n    \n    // Update trend chart with realistic monthly progression\n    if (trendChart) {\n        const baseRetention = parseFloat(localBusinesses);\n        // Show gradual improvement trend\n        trendChart.data.datasets[0].data = [\n            (baseRetention - 4.5).toFixed(1),\n            (baseRetention - 2.5).toFixed(1),\n            (baseRetention - 3.2).toFixed(1),\n            (baseRetention - 1.2).toFixed(1),\n            baseRetention.toFixed(1)\n        ];\n        trendChart.update();\n    }\n    \n    // Update categories with ZIP-proportional spending\n    const catBase = totalSpend / 10; // Distribute total spend across categories\n    const catValues = [\n        catBase * 0.32, // Food & Beverage ~32%\n        catBase * 0.22, // Health & Wellness ~22%\n        catBase * 0.19, // Professional Services ~19%\n        catBase * 0.15, // Retail ~15%\n        catBase * 0.12  // Home Services ~12%\n    ];\n    \n    document.getElementById('catFoodVal').textContent = `$${catValues[0].toFixed(1)}M`;\n    document.getElementById('catHealthVal').textContent = `$${catValues[1].toFixed(1)}M`;\n    document.getElementById('catProfVal').textContent = `$${catValues[2].toFixed(1)}M`;\n    document.getElementById('catRetailVal').textContent = `$${catValues[3].toFixed(1)}M`;\n    document.getElementById('catHomeVal').textContent = `$${catValues[4].toFixed(1)}M`;\n    \n    // Update category bars\n    document.getElementById('catFood').style.width = '100%';\n    document.getElementById('catHealth').style.width = `${catValues[1]/catValues[0]*100}%`;\n    document.getElementById('catProf').style.width = `${catValues[2]/catValues[0]*100}%`;\n    document.getElementById('catRetail').style.width = `${catValues[3]/catValues[0]*100}%`;\n    document.getElementById('catHome').style.width = `${catValues[4]/catValues[0]*100}%`;\n}
+        economicFlowChart.data.datasets[0].data = [
+            parseFloat(localBusinesses), 
+            localLeakage, 
+            outsideRegional, 
+            outsideState
+        ];
+        economicFlowChart.update();
+    }
+    
+    // Update legend with accurate values
+    const localAmt = (totalSpend * parseFloat(localBusinesses) / 100).toFixed(1);
+    const leakageAmt = (totalSpend * localLeakage / 100).toFixed(1);
+    const regionalAmt = (totalSpend * outsideRegional / 100).toFixed(1);
+    const stateAmt = (totalSpend * outsideState / 100).toFixed(1);
+    
+    document.getElementById('legendLocal').textContent = localBusinesses + '%';
+    document.getElementById('legendLocalAmt').textContent = '$' + localAmt + 'M';
+    document.getElementById('legendLeakage').textContent = localLeakage.toFixed(1) + '%';
+    document.getElementById('legendLeakageAmt').textContent = '$' + leakageAmt + 'M';
+    document.getElementById('legendRegional').textContent = outsideRegional.toFixed(1) + '%';
+    document.getElementById('legendRegionalAmt').textContent = '$' + regionalAmt + 'M';
+    document.getElementById('legendState').textContent = outsideState.toFixed(1) + '%';
+    document.getElementById('legendStateAmt').textContent = '$' + stateAmt + 'M';
+    document.getElementById('donutValue').textContent = '$' + totalSpend.toFixed(1) + 'M';
+    
+    // Update trend chart with realistic monthly progression
+    if (trendChart) {
+        const baseRetention = parseFloat(localBusinesses);
+        // Show gradual improvement trend
+        trendChart.data.datasets[0].data = [
+            (baseRetention - 4.5).toFixed(1),
+            (baseRetention - 2.5).toFixed(1),
+            (baseRetention - 3.2).toFixed(1),
+            (baseRetention - 1.2).toFixed(1),
+            baseRetention.toFixed(1)
+        ];
+        trendChart.update();
+    }
+    
+    // Update categories with ZIP-proportional spending
+    const catBase = totalSpend / 10; // Distribute total spend across categories
+    const catValues = [
+        catBase * 0.32, // Food & Beverage ~32%
+        catBase * 0.22, // Health & Wellness ~22%
+        catBase * 0.19, // Professional Services ~19%
+        catBase * 0.15, // Retail ~15%
+        catBase * 0.12  // Home Services ~12%
+    ];
+    
+    document.getElementById('catFoodVal').textContent = '$' + catValues[0].toFixed(1) + 'M';
+    document.getElementById('catHealthVal').textContent = '$' + catValues[1].toFixed(1) + 'M';
+    document.getElementById('catProfVal').textContent = '$' + catValues[2].toFixed(1) + 'M';
+    document.getElementById('catRetailVal').textContent = '$' + catValues[3].toFixed(1) + 'M';
+    document.getElementById('catHomeVal').textContent = '$' + catValues[4].toFixed(1) + 'M';
+    
+    // Update category bars
+    document.getElementById('catFood').style.width = '100%';
+    document.getElementById('catHealth').style.width = (catValues[1]/catValues[0]*100) + '%';
+    document.getElementById('catProf').style.width = (catValues[2]/catValues[0]*100) + '%';
+    document.getElementById('catRetail').style.width = (catValues[3]/catValues[0]*100) + '%';
+    document.getElementById('catHome').style.width = (catValues[4]/catValues[0]*100) + '%';
+}
 
 /**
  * Add insight to the insights panel
@@ -1385,7 +1446,44 @@ function handleExport() {
     const jobs = document.getElementById('kpiJobs').textContent;
     const businesses = document.getElementById('kpiBusinesses').textContent;
     
-    const csvContent = `FIX$ Dashboard Export\nGenerated: ${new Date().toLocaleDateString()}\n\nZIP Code,${zip}\nLocation,${currentZipData.name}\nPopulation,${currentZipData.population}\nMedian Income,$${currentZipData.medianIncome}\nUnemployment,${currentZipData.unemployment}%\n\nKPI METRICS\nTotal Spend,${totalSpend}\nLocal Retention,${retention}\nEJV Score,${ejvScore}\nJobs Supported,${jobs}\nBusinesses,${businesses}\n\nEJV COMPONENTS\nLocal Circulation (LC),${document.getElementById('sideScoreLC')?.textContent || '--'}/100\nFair Wages (W),${document.getElementById('sideScoreW')?.textContent || '--'}/100\nCommunity Need (DN),${document.getElementById('sideScoreDN')?.textContent || '--'}/100\nEquity & Inclusion (EQ),${document.getElementById('sideScoreEQ')?.textContent || '--'}/100\nEnvironmental (ENV),${document.getElementById('sideScoreENV')?.textContent || '--'}/100\nProcurement (PROC),${document.getElementById('sideScorePROC')?.textContent || '--'}/100`;\n    \n    // Create download\n    const blob = new Blob([csvContent], { type: 'text/csv' });\n    const url = URL.createObjectURL(blob);\n    const a = document.createElement('a');\n    a.href = url;\n    a.download = `FIX_Dashboard_${zip}_${new Date().toISOString().split('T')[0]}.csv`;\n    a.click();\n    URL.revokeObjectURL(url);\n    \n    addInsight('positive', `Report exported for ZIP ${zip}`);\n}
+    const lines = [
+        'FIX$ Dashboard Export',
+        'Generated: ' + new Date().toLocaleDateString(),
+        '',
+        'ZIP Code,' + zip,
+        'Location,' + currentZipData.name,
+        'Population,' + currentZipData.population,
+        'Median Income,$' + currentZipData.medianIncome,
+        'Unemployment,' + currentZipData.unemployment + '%',
+        '',
+        'KPI METRICS',
+        'Total Spend,' + totalSpend,
+        'Local Retention,' + retention,
+        'EJV Score,' + ejvScore,
+        'Jobs Supported,' + jobs,
+        'Businesses,' + businesses,
+        '',
+        'EJV COMPONENTS',
+        'Local Circulation (LC),' + (document.getElementById('sideScoreLC')?.textContent || '--') + '/100',
+        'Fair Wages (W),' + (document.getElementById('sideScoreW')?.textContent || '--') + '/100',
+        'Community Need (DN),' + (document.getElementById('sideScoreDN')?.textContent || '--') + '/100',
+        'Equity & Inclusion (EQ),' + (document.getElementById('sideScoreEQ')?.textContent || '--') + '/100',
+        'Environmental (ENV),' + (document.getElementById('sideScoreENV')?.textContent || '--') + '/100',
+        'Procurement (PROC),' + (document.getElementById('sideScorePROC')?.textContent || '--') + '/100'
+    ];
+    const csvContent = lines.join('\n');
+    
+    // Create download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'FIX_Dashboard_' + zip + '_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    addInsight('positive', 'Report exported for ZIP ' + zip);
+}
 
 // Start when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
