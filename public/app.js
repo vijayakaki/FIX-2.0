@@ -338,18 +338,14 @@ function showStoresByCompany(companyKey, filterZip = null) {
     let filteredStores = stores;
     
     if (filterZip) {
+        // Only show stores that match the searched ZIP
         filteredStores = stores.filter(s => s.zip === filterZip);
-        // If no stores in that exact ZIP, show all within range
-        if (filteredStores.length === 0) {
-            filteredStores = stores;
-        }
+        // Don't fall back to showing all stores - let caller handle the searched ZIP
     }
     
     if (filteredStores.length > 0) {
         addStoreMarkers(filteredStores, filterZip);
         addInsight('info', `Showing ${filteredStores.length} ${companyKey.replace('_', ' ')} location(s) on map`);
-    } else {
-        addInsight('warning', `No ${companyKey.replace('_', ' ')} stores found in database`);
     }
     
     return filteredStores;
@@ -1253,24 +1249,10 @@ async function handleStoreCalculation() {
         // Use actual LC (Local Circulation) component for retention
         const retention = result.components.LC_local_circulation;
         
-        if (company) {
-            // Show all locations of this company
-            const stores = showStoresByCompany(company, zip);
-            if (stores.length === 0) {
-                // No predefined stores, show the searched ZIP with calculated retention
-                addSearchedZipMarker(zip, retention, company.replace('_', ' ') + ' (' + zip + ')');
-            }
-        } else if (category) {
-            // Show all stores in this category
-            const stores = showStoresByCategory(category, zip);
-            if (stores.length === 0) {
-                // No predefined stores, show ZIP
-                addSearchedZipMarker(zip, retention, category.replace('_', ' ') + ' (' + zip + ')');
-            }
-        } else {
-            // Show the searched ZIP with its calculated retention
-            addSearchedZipMarker(zip, retention, storeName);
-        }
+        // Always show the searched ZIP location with the user's store name
+        // This ensures the user sees their actual search location, not pre-defined Memphis stores
+        const displayName = storeName || (company ? company.replace('_', ' ') : 'Store') + ' (' + zip + ')';
+        addSearchedZipMarker(zip, retention, displayName);
         
         addInsight('info', 'Map updated for ZIP ' + zip);
     }
