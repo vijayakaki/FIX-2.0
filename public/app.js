@@ -497,6 +497,8 @@ function generateEstimatedEJV(params) {
     const company = params.company_name;
     const zip = params.zip_code;
     
+    console.log('generateEstimatedEJV called with:', { company, zip, isLocal });
+    
     // Get ZIP-specific data for community need calculation
     const zipData = ZIP_DATA[zip] || estimateZipData(zip);
     
@@ -594,6 +596,7 @@ function generateEstimatedEJV(params) {
     
     // Get company data or use defaults
     const companyData = company ? COMPANY_METRICS[company] : null;
+    console.log('Company lookup:', { company, found: !!companyData, data: companyData });
     
     // Living wage (varies by location - using $15/hr as baseline, adjusted by ZIP income)
     const livingWage = Math.max(12, Math.min(22, zipData.medianIncome / 2080 * 0.35));
@@ -1223,6 +1226,8 @@ async function handleStoreCalculation() {
     const category = document.getElementById('storeCategory').value;
     const isLocal = document.getElementById('isLocal').checked;
     
+    console.log('handleStoreCalculation:', { zip, storeName, company, category, isLocal });
+    
     if (!zip || zip.length !== 5 || !/^\d{5}$/.test(zip)) {
         alert('Please enter a valid 5-digit ZIP code');
         document.getElementById('storeZip').focus();
@@ -1237,7 +1242,10 @@ async function handleStoreCalculation() {
         is_local_business: isLocal
     };
     
+    console.log('Calling calculateEJV with params:', params);
+    
     const result = await calculateEJV(params);
+    console.log('EJV Result:', result);
     displayResults(result);
     
     // Update map based on search type
