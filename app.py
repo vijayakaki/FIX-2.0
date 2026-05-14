@@ -1063,6 +1063,53 @@ def api_impact_bands():
     return jsonify({"impact_bands": IMPACT_BANDS})
 
 
+@app.route("/api/overpass", methods=["POST", "OPTIONS"])
+def api_overpass_proxy():
+    """Proxy requests to Overpass API to avoid CORS issues."""
+    import requests as http_requests
+    
+    # Handle CORS preflight
+    if request.method == "OPTIONS":
+        response = app.make_default_options_response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+    
+    try:
+        data = request.get_json()
+        query = data.get("query") if data else None
+        
+        if not query:
+            return jsonify({"error": "Missing query parameter"}), 400
+        
+        # Forward request to Overpass API
+        overpass_response = http_requests.post(
+            "https://overpass-api.de/api/interpreter",
+            data={"data": query},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=30
+        )
+        
+        if not overpass_response.ok:
+            return jsonify({
+                "error": f"Overpass API error: {overpass_response.status_code}",
+                "message": overpass_response.text[:500]
+            }), overpass_response.status_code
+        
+        result = overpass_response.json()
+        response = jsonify(result)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        return response
+        
+    except http_requests.exceptions.Timeout:
+        return jsonify({"error": "Overpass API timeout"}), 504
+    except http_requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Request failed: {str(e)}"}), 502
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # =============================================================================
 # MAIN
 # =============================================================================
