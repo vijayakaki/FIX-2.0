@@ -735,10 +735,122 @@ function showLoading(show) {
 }
 
 /**
- * Search by ZIP code
+ * Estimate coordinates for any ZIP code based on ZIP ranges
+ * US ZIP codes follow geographic patterns
+ */
+function estimateZipCoords(zip) {
+    const prefix = parseInt(zip.substring(0, 3));
+    
+    // ZIP code prefix ranges to approximate lat/lng
+    // Northeast (0xx-2xx)
+    if (prefix >= 0 && prefix < 100) return { lat: 42.3 + Math.random() * 2, lng: -71.0 + Math.random() * 2, name: 'Northeast' };
+    if (prefix >= 100 && prefix < 200) return { lat: 40.7 + Math.random() * 2, lng: -74.0 + Math.random() * 2, name: 'NY/NJ Area' };
+    if (prefix >= 200 && prefix < 270) return { lat: 38.9 + Math.random() * 2, lng: -77.0 + Math.random() * 2, name: 'Mid-Atlantic' };
+    
+    // Southeast (270-399)
+    if (prefix >= 270 && prefix < 300) return { lat: 35.5 + Math.random() * 2, lng: -79.0 + Math.random() * 2, name: 'NC Area' };
+    if (prefix >= 300 && prefix < 320) return { lat: 33.7 + Math.random() * 2, lng: -84.4 + Math.random() * 2, name: 'GA Area' };
+    if (prefix >= 320 && prefix < 340) return { lat: 28.5 + Math.random() * 3, lng: -81.4 + Math.random() * 3, name: 'FL Area' };
+    if (prefix >= 350 && prefix < 370) return { lat: 33.5 + Math.random() * 2, lng: -86.8 + Math.random() * 2, name: 'AL Area' };
+    if (prefix >= 370 && prefix < 386) return { lat: 36.1 + Math.random() * 2, lng: -86.8 + Math.random() * 2, name: 'TN Area' };
+    if (prefix >= 380 && prefix < 386) return { lat: 35.15 + Math.random() * 0.2, lng: -90.05 + Math.random() * 0.2, name: 'Memphis, TN' };
+    if (prefix >= 386 && prefix < 398) return { lat: 32.3 + Math.random() * 2, lng: -90.2 + Math.random() * 2, name: 'MS Area' };
+    
+    // Midwest (400-599)
+    if (prefix >= 400 && prefix < 430) return { lat: 38.2 + Math.random() * 2, lng: -85.7 + Math.random() * 2, name: 'KY Area' };
+    if (prefix >= 430 && prefix < 460) return { lat: 40.0 + Math.random() * 2, lng: -83.0 + Math.random() * 2, name: 'OH Area' };
+    if (prefix >= 460 && prefix < 480) return { lat: 39.8 + Math.random() * 2, lng: -86.1 + Math.random() * 2, name: 'IN Area' };
+    if (prefix >= 480 && prefix < 500) return { lat: 42.3 + Math.random() * 2, lng: -83.0 + Math.random() * 2, name: 'MI Area' };
+    if (prefix >= 500 && prefix < 530) return { lat: 41.6 + Math.random() * 2, lng: -93.6 + Math.random() * 2, name: 'IA Area' };
+    if (prefix >= 530 && prefix < 550) return { lat: 43.0 + Math.random() * 2, lng: -89.4 + Math.random() * 2, name: 'WI Area' };
+    if (prefix >= 550 && prefix < 570) return { lat: 44.9 + Math.random() * 2, lng: -93.2 + Math.random() * 2, name: 'MN Area' };
+    if (prefix >= 600 && prefix < 630) return { lat: 41.9 + Math.random() * 1, lng: -87.6 + Math.random() * 1, name: 'Chicago, IL' };
+    if (prefix >= 630 && prefix < 660) return { lat: 38.6 + Math.random() * 2, lng: -90.2 + Math.random() * 2, name: 'MO Area' };
+    if (prefix >= 660 && prefix < 680) return { lat: 39.0 + Math.random() * 2, lng: -94.6 + Math.random() * 2, name: 'Kansas City' };
+    
+    // South Central (700-799)
+    if (prefix >= 700 && prefix < 715) return { lat: 30.0 + Math.random() * 1, lng: -90.0 + Math.random() * 1, name: 'LA Area' };
+    if (prefix >= 750 && prefix < 770) return { lat: 32.8 + Math.random() * 1, lng: -96.8 + Math.random() * 1, name: 'Dallas, TX' };
+    if (prefix >= 770 && prefix < 780) return { lat: 29.8 + Math.random() * 1, lng: -95.4 + Math.random() * 1, name: 'Houston, TX' };
+    if (prefix >= 780 && prefix < 800) return { lat: 29.4 + Math.random() * 1, lng: -98.5 + Math.random() * 1, name: 'San Antonio, TX' };
+    
+    // Mountain/West (800-899)
+    if (prefix >= 800 && prefix < 820) return { lat: 39.7 + Math.random() * 2, lng: -104.9 + Math.random() * 2, name: 'CO Area' };
+    if (prefix >= 850 && prefix < 860) return { lat: 33.4 + Math.random() * 1, lng: -112.0 + Math.random() * 1, name: 'Phoenix, AZ' };
+    if (prefix >= 870 && prefix < 885) return { lat: 35.1 + Math.random() * 2, lng: -106.6 + Math.random() * 2, name: 'NM Area' };
+    if (prefix >= 890 && prefix < 900) return { lat: 36.1 + Math.random() * 1, lng: -115.2 + Math.random() * 1, name: 'Las Vegas, NV' };
+    
+    // Pacific (900-999)
+    if (prefix >= 900 && prefix < 910) return { lat: 34.0 + Math.random() * 1, lng: -118.2 + Math.random() * 1, name: 'Los Angeles, CA' };
+    if (prefix >= 920 && prefix < 930) return { lat: 32.7 + Math.random() * 1, lng: -117.1 + Math.random() * 1, name: 'San Diego, CA' };
+    if (prefix >= 940 && prefix < 960) return { lat: 37.8 + Math.random() * 1, lng: -122.4 + Math.random() * 1, name: 'SF Bay Area, CA' };
+    if (prefix >= 970 && prefix < 980) return { lat: 45.5 + Math.random() * 1, lng: -122.7 + Math.random() * 1, name: 'Portland, OR' };
+    if (prefix >= 980 && prefix < 995) return { lat: 47.6 + Math.random() * 1, lng: -122.3 + Math.random() * 1, name: 'Seattle, WA' };
+    
+    // Default to center US
+    return { lat: 39.8 + Math.random() * 5, lng: -98.5 + Math.random() * 5, name: 'United States' };
+}
+
+/**
+ * Add a single searched ZIP to map with its retention %
+ */
+function addSearchedZipMarker(zip, retention, storeName = null) {
+    // Get coordinates - use predefined if available, otherwise estimate
+    let coords = ZIP_COORDS[zip];
+    let isEstimated = false;
+    
+    if (!coords || coords === ZIP_COORDS.default) {
+        coords = estimateZipCoords(zip);
+        isEstimated = true;
+        // Store for future use
+        ZIP_COORDS[zip] = { ...coords, retention: retention };
+    }
+    
+    clearMapMarkers();
+    
+    const color = getRetentionColor(retention);
+    
+    const marker = L.circleMarker([coords.lat, coords.lng], {
+        radius: 35,
+        fillColor: color,
+        color: '#1a3d16',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.9
+    }).addTo(map);
+    
+    const displayName = storeName || `ZIP ${zip}`;
+    const locationNote = isEstimated ? `<br><span style="font-size:10px;color:#999;">(Approx. location)</span>` : '';
+    
+    marker.bindPopup(`
+        <div style="text-align:center;min-width:140px;">
+            <strong style="font-size:14px;">${displayName}</strong><br>
+            <span style="font-size:12px;color:#666;">ZIP: ${zip}</span>${locationNote}<br>
+            <span style="font-size:24px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
+            <span style="font-size:12px;color:#666;">Local Retention</span>
+        </div>
+    `).openPopup();
+    
+    // Permanent label
+    marker.bindTooltip(`<b>${zip}</b><br>${retention.toFixed(0)}%`, {
+        permanent: true,
+        direction: 'center',
+        className: 'zip-tooltip'
+    });
+    
+    markers.push(marker);
+    
+    // Center map on this location
+    map.setView([coords.lat, coords.lng], 12);
+    
+    return coords;
+}
+
+/**
+ * Search by ZIP code - shows the searched ZIP on map with retention %
  */
 window.searchZip = async function(zip) {
-    if (!zip || zip.length !== 5) {
+    if (!zip || zip.length !== 5 || !/^\d{5}$/.test(zip)) {
         alert('Please enter a valid 5-digit ZIP code');
         return;
     }
@@ -754,11 +866,11 @@ window.searchZip = async function(zip) {
     
     displayResults(result);
     
-    // Update map to focus on this ZIP
-    const coords = ZIP_COORDS[zip] || ZIP_COORDS.default;
+    // Show this ZIP on the map with its calculated retention
     if (map) {
-        map.setView([coords.lat, coords.lng], 12);
-        addZipMarkers([zip]);
+        const retention = result.ejv_percentage * 0.5; // Local retention as ~50% of EJV
+        addSearchedZipMarker(zip, retention, `ZIP ${zip} Analysis`);
+        addInsight('info', `Showing ZIP ${zip} on map with ${retention.toFixed(1)}% local retention`);
     }
 };
 
@@ -772,7 +884,7 @@ async function handleStoreCalculation() {
     const category = document.getElementById('storeCategory').value;
     const isLocal = document.getElementById('isLocal').checked;
     
-    if (!zip || zip.length !== 5) {
+    if (!zip || zip.length !== 5 || !/^\d{5}$/.test(zip)) {
         alert('Please enter a valid 5-digit ZIP code');
         document.getElementById('storeZip').focus();
         return;
@@ -791,23 +903,28 @@ async function handleStoreCalculation() {
     
     // Update map based on search type
     if (map) {
-        const coords = ZIP_COORDS[zip] || ZIP_COORDS.default;
-        map.setView([coords.lat, coords.lng], 12);
+        const retention = result.ejv_percentage * 0.5; // Local retention ~50% of EJV score
         
         if (company) {
-            // Show all locations of this company, highlight the searched ZIP
-            showStoresByCompany(company, zip);
+            // Show all locations of this company
+            const stores = showStoresByCompany(company, zip);
+            if (stores.length === 0) {
+                // No predefined stores, show the searched ZIP with calculated retention
+                addSearchedZipMarker(zip, retention, `${company.replace('_', ' ')} (${zip})`);
+            }
         } else if (category) {
-            // Show all stores in this category for the ZIP
-            showStoresByCategory(category, zip);
+            // Show all stores in this category
+            const stores = showStoresByCategory(category, zip);
+            if (stores.length === 0) {
+                // No predefined stores, show ZIP
+                addSearchedZipMarker(zip, retention, `${category.replace('_', ' ')} (${zip})`);
+            }
         } else {
-            // Just show ZIP markers for the area
-            const nearbyZips = Object.keys(ZIP_COORDS).filter(z => {
-                const c = ZIP_COORDS[z];
-                return Math.abs(c.lat - coords.lat) < 0.15 && Math.abs(c.lng - coords.lng) < 0.15;
-            });
-            addZipMarkers(nearbyZips.length > 0 ? nearbyZips : [zip]);
+            // Show the searched ZIP with its calculated retention
+            addSearchedZipMarker(zip, retention, storeName);
         }
+        
+        addInsight('info', `Map updated for ZIP ${zip}`);
     }
 }
 
