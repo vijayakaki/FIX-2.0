@@ -1440,10 +1440,11 @@ async function fetchStoresFromOverpass(storeName, zip) {
         
         console.log('Overpass query:', query);
         
-        const response = await fetch('https://overpass-api.de/api/interpreter', {
+        // Use local proxy to avoid CORS issues
+        const response = await fetch('/api/overpass', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'data=' + encodeURIComponent(query)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
         });
         
         if (!response.ok) {
