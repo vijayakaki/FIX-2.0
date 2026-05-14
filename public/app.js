@@ -725,8 +725,8 @@ function displayResults(result) {
     // Update KPIs
     updateKPIs(result);
     
-    // Update charts
-    updateCharts(score);
+    // Update charts with result data
+    updateCharts(score, null, result);
     
     // Add insight
     addInsight('positive', `EJV Score calculated: ${score.toFixed(1)} (${band.label})`);
@@ -805,14 +805,14 @@ function updateKPIs(result) {
     const zipData = ZIP_DATA[zip] || estimateZipData(zip);
     
     // Calculate accurate values
-    // Total Spend: Use actual ZIP data, or estimate based on population * avg spend per capita
+    // Total Spend: Use actual ZIP data
     const totalSpend = zipData.totalSpend;
     
-    // Local Retention: Based on EJV score - higher EJV means better local circulation
-    const retention = (score * 0.45 + 5).toFixed(1); // 5% base + up to 45% based on EJV
+    // Local Retention: Use actual LC (Local Circulation) component value
+    // LC = sqrt(LocalHiring% × LocalProcurement%) × 100
+    const retention = result.components.LC_local_circulation.toFixed(1);
     
     // Jobs Supported: Based on local businesses and retention rate
-    // Average 8 jobs per small business, adjusted by retention
     const jobsPerBusiness = 8;
     const localBusinessRatio = parseFloat(retention) / 100;
     const jobs = Math.round(zipData.businesses * jobsPerBusiness * localBusinessRatio);
@@ -821,14 +821,14 @@ function updateKPIs(result) {
     const businesses = zipData.businesses;
     
     // Update display
-    document.getElementById('kpiTotalSpend').textContent = `$${totalSpend.toFixed(1)}M`;
-    const spendChange = ((score - 50) * 0.3 + 5).toFixed(1); // Higher EJV = better spending growth
-    document.getElementById('kpiSpendChange').textContent = spendChange > 0 ? `+${spendChange}% vs last month` : `${spendChange}% vs last month`;
+    document.getElementById('kpiTotalSpend').textContent = '$' + totalSpend.toFixed(1) + 'M';
+    const spendChange = ((score - 50) * 0.3 + 5).toFixed(1);
+    document.getElementById('kpiSpendChange').textContent = spendChange > 0 ? '+' + spendChange + '% vs last month' : spendChange + '% vs last month';
     document.getElementById('kpiSpendChange').className = spendChange > 0 ? 'kpi-change positive' : 'kpi-change';
     
-    document.getElementById('kpiLocalRetention').textContent = `${retention}%`;
-    const retentionChange = ((score - 50) * 0.1).toFixed(1);
-    document.getElementById('kpiRetentionChange').textContent = retentionChange > 0 ? `+${retentionChange} pts vs Apr` : `${retentionChange} pts vs Apr`;
+    document.getElementById('kpiLocalRetention').textContent = retention + '%';
+    const retentionChange = ((parseFloat(retention) - 30) * 0.15).toFixed(1);
+    document.getElementById('kpiRetentionChange').textContent = retentionChange > 0 ? '+' + retentionChange + ' pts vs Apr' : retentionChange + ' pts vs Apr';
     document.getElementById('kpiRetentionChange').className = retentionChange > 0 ? 'kpi-change positive' : 'kpi-change';
     
     document.getElementById('kpiEJV').textContent = score.toFixed(0);
@@ -837,17 +837,17 @@ function updateKPIs(result) {
     document.getElementById('kpiEJVBadge').style.color = band.color;
     
     document.getElementById('kpiJobs').textContent = jobs.toLocaleString();
-    const jobsChange = Math.round(jobs * 0.05); // ~5% monthly growth
-    document.getElementById('kpiJobsChange').textContent = `+${jobsChange} vs Apr`;
+    const jobsChange = Math.round(jobs * 0.05);
+    document.getElementById('kpiJobsChange').textContent = '+' + jobsChange + ' vs Apr';
     document.getElementById('kpiJobsChange').className = 'kpi-change positive';
     
     document.getElementById('kpiBusinesses').textContent = businesses.toLocaleString();
-    const bizChange = Math.round(businesses * 0.03); // ~3% monthly growth
-    document.getElementById('kpiBizChange').textContent = `+${bizChange} vs Apr`;
+    const bizChange = Math.round(businesses * 0.03);
+    document.getElementById('kpiBizChange').textContent = '+' + bizChange + ' vs Apr';
     document.getElementById('kpiBizChange').className = 'kpi-change positive';
     
     // Update location with actual ZIP name
-    document.getElementById('currentLocation').textContent = `${zipData.name || 'Location'} ${zip}`;
+    document.getElementById('currentLocation').textContent = (zipData.name || 'Location') + ' ' + zip;
 }
 
 /**
@@ -890,17 +890,19 @@ function estimateZipData(zip) {
 /**
  * Update charts with accurate ZIP-based data
  */
-function updateCharts(ejvScore, zipCode = null) {
+function updateCharts(ejvScore, zipCode = null, result = null) {
     const zip = zipCode || document.getElementById('storeZip')?.value || null;
     const zipData = zip ? (ZIP_DATA[zip] || estimateZipData(zip)) : null;
     const totalSpend = zipData ? zipData.totalSpend : 100;
     
-    // Calculate economic flow distribution based on EJV score
-    // Higher EJV = more local retention
-    const localBusinesses = (ejvScore * 0.40 + 5).toFixed(1); // 5-45%
-    const localLeakage = (100 - parseFloat(localBusinesses)) * 0.45; // ~45% of remainder
-    const outsideRegional = (100 - parseFloat(localBusinesses)) * 0.30; // ~30% of remainder  
-    const outsideState = (100 - parseFloat(localBusinesses)) * 0.25; // ~25% of remainder
+    // Use actual LC component for local businesses %, or calculate from EJV
+    const localBusinesses = result && result.components 
+        ? result.components.LC_local_circulation.toFixed(1)
+        : (ejvScore * 0.45 + 5).toFixed(1);
+    
+    const localLeakage = (100 - parseFloat(localBusinesses)) * 0.45;
+    const outsideRegional = (100 - parseFloat(localBusinesses)) * 0.30;
+    const outsideState = (100 - parseFloat(localBusinesses)) * 0.25;
     
     if (economicFlowChart) {
         economicFlowChart.data.datasets[0].data = [
@@ -1203,11 +1205,11 @@ window.searchZip = async function(zip) {
     
     displayResults(result);
     
-    // Show this ZIP on the map with its calculated retention
+    // Show this ZIP on the map with actual LC (Local Circulation) value
     if (map) {
-        const retention = result.ejv_percentage * 0.5; // Local retention as ~50% of EJV
-        addSearchedZipMarker(zip, retention, `ZIP ${zip} Analysis`);
-        addInsight('info', `Showing ZIP ${zip} on map with ${retention.toFixed(1)}% local retention`);
+        const retention = result.components.LC_local_circulation;
+        addSearchedZipMarker(zip, retention, 'ZIP ' + zip + ' Analysis');
+        addInsight('info', 'Showing ZIP ' + zip + ' on map with ' + retention.toFixed(1) + '% local retention');
     }
 };
 
@@ -1240,28 +1242,29 @@ async function handleStoreCalculation() {
     
     // Update map based on search type
     if (map) {
-        const retention = result.ejv_percentage * 0.5; // Local retention ~50% of EJV score
+        // Use actual LC (Local Circulation) component for retention
+        const retention = result.components.LC_local_circulation;
         
         if (company) {
             // Show all locations of this company
             const stores = showStoresByCompany(company, zip);
             if (stores.length === 0) {
                 // No predefined stores, show the searched ZIP with calculated retention
-                addSearchedZipMarker(zip, retention, `${company.replace('_', ' ')} (${zip})`);
+                addSearchedZipMarker(zip, retention, company.replace('_', ' ') + ' (' + zip + ')');
             }
         } else if (category) {
             // Show all stores in this category
             const stores = showStoresByCategory(category, zip);
             if (stores.length === 0) {
                 // No predefined stores, show ZIP
-                addSearchedZipMarker(zip, retention, `${category.replace('_', ' ')} (${zip})`);
+                addSearchedZipMarker(zip, retention, category.replace('_', ' ') + ' (' + zip + ')');
             }
         } else {
             // Show the searched ZIP with its calculated retention
             addSearchedZipMarker(zip, retention, storeName);
         }
         
-        addInsight('info', `Map updated for ZIP ${zip}`);
+        addInsight('info', 'Map updated for ZIP ' + zip);
     }
 }
 
