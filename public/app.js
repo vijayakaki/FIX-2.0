@@ -1308,6 +1308,9 @@ function addSearchedZipMarker(zip, retention, storeName = null) {
     // Center map on this location
     map.setView([coords.lat, coords.lng], 12);
     
+    // Update economic flow chart to match retention
+    updateEconomicFlowWithRetention(retention);
+    
     return coords;
 }
 
@@ -1348,6 +1351,9 @@ function updateMarkerLocation(coords, retention, storeName, zip) {
     
     markers.push(marker);
     map.setView([coords.lat, coords.lng], 12);
+    
+    // Update economic flow chart to match retention
+    updateEconomicFlowWithRetention(retention);
     
     addInsight('positive', `Location verified: ${coords.name || zip}`);
 }
@@ -1433,9 +1439,57 @@ function searchStoresByName(searchName, filterZip = null) {
 }
 
 /**
- * Show multiple stores on the map with their retention values
+ * Calculate actual EJV/retention for a store based on company metrics
+ * This ensures map values match the EJV calculation
  */
-function showStoresOnMap(stores, highlightZip = null) {
+function getStoreCalculatedRetention(store) {
+    const company = store.company;
+    const zip = store.zip;
+    const isLocal = store.isLocal || false;
+    
+    // Use the same COMPANY_METRICS from generateEstimatedEJV
+    const COMPANY_METRICS = {
+        'costco': { localProc: 40, localHiring: 65 },
+        'sams_club': { localProc: 35, localHiring: 60 },
+        'whole_foods': { localProc: 55, localHiring: 70 },
+        'trader_joes': { localProc: 38, localHiring: 65 },
+        'walmart': { localProc: 35, localHiring: 60 },
+        'kroger': { localProc: 42, localHiring: 68 },
+        'target': { localProc: 37, localHiring: 62 },
+        'safeway': { localProc: 40, localHiring: 65 },
+        'publix': { localProc: 45, localHiring: 72 },
+        'aldi': { localProc: 28, localHiring: 58 },
+        'wegmans': { localProc: 48, localHiring: 70 },
+        'cvs': { localProc: 30, localHiring: 60 },
+        'walgreens': { localProc: 28, localHiring: 58 },
+        'home_depot': { localProc: 32, localHiring: 62 },
+        'lowes': { localProc: 30, localHiring: 60 },
+        'starbucks': { localProc: 25, localHiring: 55 },
+        'mcdonalds': { localProc: 20, localHiring: 50 },
+        'chipotle': { localProc: 35, localHiring: 60 },
+        '7_eleven': { localProc: 18, localHiring: 50 },
+        'wawa': { localProc: 35, localHiring: 62 },
+        'local_grocery': { localProc: 65, localHiring: 90 },
+        'worker_cooperative': { localProc: 80, localHiring: 95 }
+    };
+    
+    const metrics = COMPANY_METRICS[company] || { localProc: 30, localHiring: 60 };
+    
+    // Adjust for local businesses
+    const localHiring = isLocal ? 90 : metrics.localHiring;
+    const localProc = isLocal ? Math.max(65, metrics.localProc) : metrics.localProc;
+    
+    // LC = sqrt(LocalHiring% × LocalProcurement%) × 100
+    const LC = Math.sqrt((localHiring / 100) * (localProc / 100)) * 100;
+    
+    return Math.round(LC * 10) / 10;
+}
+
+/**
+ * Show multiple stores on the map with their CALCULATED retention values
+ * Values are coordinated with EJV calculation
+ */
+async function showStoresOnMap(stores, highlightZip = null, currentResult = null) {
     clearMapMarkers();
     
     if (stores.length === 0) {
@@ -1443,8 +1497,15 @@ function showStoresOnMap(stores, highlightZip = null) {
         return;
     }
     
-    stores.forEach(store => {
-        const color = getRetentionColor(store.retention);
+    // Calculate actual retention for each store
+    const storesWithCalc = stores.map(store => ({
+        ...store,
+        calculatedRetention: getStoreCalculatedRetention(store)
+    }));
+    
+    storesWithCalc.forEach(store => {
+        const retention = store.calculatedRetention;
+        const color = getRetentionColor(retention);
         const isHighlighted = highlightZip && store.zip === highlightZip;
         
         const marker = L.circleMarker([store.lat, store.lng], {
@@ -1465,15 +1526,27 @@ function showStoresOnMap(stores, highlightZip = null) {
                 <strong style="font-size:13px;">${store.name}</strong><br>
                 ${companyBadge}
                 <span style="font-size:11px;color:#666;">ZIP: ${store.zip}</span><br>
-                <span style="font-size:20px;font-weight:bold;color:${color}">${store.retention}%</span><br>
-                <span style="font-size:11px;color:#666;">Local Retention</span>
+                <span style="font-size:20px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
+                <span style="font-size:11px;color:#666;">Local Retention (LC)</span>
             </div>
         `);
         
-        marker.bindTooltip(`<b>${store.name.split(' ')[0]}</b><br>${store.retention}%`, {
+        marker.bindTooltip(`<b>${store.name.split(' ')[0]}</b><br>${retention.toFixed(0)}%`, {
             permanent: true,
             direction: 'center',
             className: 'zip-tooltip'
+        });
+        
+        // Add click handler to update sidebar with this store's data
+        marker.on('click', async () => {
+            const result = await calculateEJV({
+                zip_code: store.zip,
+                store_name: store.name,
+                company_name: store.company,
+                is_local_business: store.isLocal || false
+            });
+            displayResults(result);
+            addInsight('info', `Selected: ${store.name} - EJV: ${result.ejv_percentage.toFixed(1)}%, Local Retention: ${result.components.LC_local_circulation.toFixed(1)}%`);
         });
         
         markers.push(marker);
@@ -1483,9 +1556,34 @@ function showStoresOnMap(stores, highlightZip = null) {
     if (markers.length > 0) {
         const group = L.featureGroup(markers);
         map.fitBounds(group.getBounds().pad(0.2));
+        
+        // Update economic flow chart with aggregate retention data
+        const avgRetention = storesWithCalc.reduce((sum, s) => sum + s.calculatedRetention, 0) / storesWithCalc.length;
+        updateEconomicFlowWithRetention(avgRetention);
     }
     
-    addInsight('positive', `Found ${stores.length} store(s) matching your search`);
+    addInsight('positive', `Showing ${stores.length} store(s) - Click any marker for detailed EJV breakdown`);
+}
+
+/**
+ * Update economic flow chart based on retention value
+ */
+function updateEconomicFlowWithRetention(retention) {
+    if (!economicFlowChart) return;
+    
+    // Calculate flow distribution based on retention
+    const localBusiness = retention;
+    const localLeakage = Math.min(30, 100 - retention) * 0.4;
+    const outsideRegional = Math.min(25, 100 - retention - localLeakage) * 0.3;
+    const outsideState = 100 - localBusiness - localLeakage - outsideRegional;
+    
+    economicFlowChart.data.datasets[0].data = [
+        Math.round(localBusiness),
+        Math.round(localLeakage),
+        Math.round(outsideRegional),
+        Math.round(Math.max(0, outsideState))
+    ];
+    economicFlowChart.update();
 }
 
 /**
@@ -1580,8 +1678,8 @@ async function handleStoreCalculation() {
         if (storeName && storeName !== 'Store Analysis') {
             storesFound = searchStoresByName(storeName, zip);
             if (storesFound.length > 0) {
-                showStoresOnMap(storesFound, zip);
-                addInsight('info', `Found ${storesFound.length} "${storeName}" store(s) in ZIP ${zip}`);
+                showStoresOnMap(storesFound, zip, result);
+                addInsight('info', `Found ${storesFound.length} "${storeName}" store(s) in ZIP ${zip}. Click any store to see details.`);
                 return;
             }
         }
@@ -1593,8 +1691,8 @@ async function handleStoreCalculation() {
                 .map(s => ({ ...s, company, companyName: COMPANY_NAMES[company] }));
             
             if (companyStores.length > 0) {
-                showStoresOnMap(companyStores, zip);
-                addInsight('info', `Found ${companyStores.length} ${COMPANY_NAMES[company]} store(s) in ZIP ${zip}`);
+                showStoresOnMap(companyStores, zip, result);
+                addInsight('info', `Found ${companyStores.length} ${COMPANY_NAMES[company]} store(s) in ZIP ${zip}. Click any store to see details.`);
                 return;
             }
         }
@@ -1603,8 +1701,8 @@ async function handleStoreCalculation() {
         if (category) {
             storesFound = getStoresByCategoryInZip(category, zip);
             if (storesFound.length > 0) {
-                showStoresOnMap(storesFound, zip);
-                addInsight('info', `Found ${storesFound.length} ${category.replace('_', ' ')} store(s) in ZIP ${zip}`);
+                showStoresOnMap(storesFound, zip, result);
+                addInsight('info', `Found ${storesFound.length} ${category.replace('_', ' ')} store(s) in ZIP ${zip}. Click any store to see details.`);
                 return;
             }
         }
