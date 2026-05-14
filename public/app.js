@@ -2060,6 +2060,92 @@ async function handleStoreCalculation() {
         return;
     }
     
+    // STEP 1: First, search for stores
+    let foundStores = [];
+    let searchType = '';
+    
+    // Priority 1: If company is selected, fetch REAL locations from Overpass API
+    if (company) {
+        addInsight('info', `Searching for ${COMPANY_NAMES[company] || company} stores near ZIP ${zip}...`);
+        searchType = 'company';
+        
+        const overpassStores = await fetchStoresFromOverpass(company, zip);
+        
+        if (overpassStores.length > 0) {
+            foundStores = overpassStores.map(store => ({
+                ...store,
+                company: company,
+                companyName: COMPANY_NAMES[company] || company,
+                zip: zip
+            }));
+            addInsight('positive', `Found ${foundStores.length} real ${COMPANY_NAMES[company]} location(s) from OpenStreetMap`);
+        } else {
+            // Fallback to local database
+            const companyStores = (STORE_DATABASE[company] || [])
+                .filter(s => s.zip === zip)
+                .map(s => ({ ...s, company, companyName: COMPANY_NAMES[company] }));
+            
+            if (companyStores.length > 0) {
+                foundStores = companyStores;
+                addInsight('warning', `Using cached data: ${foundStores.length} ${COMPANY_NAMES[company]} store(s)`);
+            }
+        }
+    }
+    // Priority 2: If store name is entered, search via Overpass
+    else if (storeName && storeName !== 'Store Analysis') {
+        addInsight('info', `Searching for "${storeName}" near ZIP ${zip}...`);
+        searchType = 'name';
+        
+        const overpassStores = await fetchStoresFromOverpass(storeName, zip);
+        
+        if (overpassStores.length > 0) {
+            foundStores = overpassStores.map(store => ({
+                ...store,
+                company: 'custom',
+                companyName: storeName,
+                zip: zip
+            }));
+            addInsight('positive', `Found ${foundStores.length} "${storeName}" location(s) from OpenStreetMap`);
+        } else {
+            // Fallback to local search
+            const localStores = searchStoresByName(storeName, zip);
+            if (localStores.length > 0) {
+                foundStores = localStores;
+                addInsight('info', `Found ${foundStores.length} "${storeName}" store(s) from cache`);
+            }
+        }
+    }
+    // Priority 3: If category is selected, fetch multiple brands
+    else if (category && CATEGORY_STORES[category]) {
+        addInsight('info', `Searching for ${category.replace('_', ' ')} stores near ZIP ${zip}...`);
+        searchType = 'category';
+        
+        const categoryCompanies = CATEGORY_STORES[category];
+        
+        // Try to fetch from Overpass for each company in category (limit to 3)
+        for (const compKey of categoryCompanies.slice(0, 3)) {
+            const stores = await fetchStoresFromOverpass(compKey, zip);
+            foundStores = foundStores.concat(stores.map(s => ({
+                ...s,
+                company: compKey,
+                companyName: COMPANY_NAMES[compKey] || compKey,
+                zip: zip
+            })));
+        }
+        
+        if (foundStores.length > 0) {
+            addInsight('positive', `Found ${foundStores.length} real ${category.replace('_', ' ')} store(s)`);
+        } else {
+            // Fallback to local
+            const localCategoryStores = getStoresByCategoryInZip(category, zip);
+            if (localCategoryStores.length > 0) {
+                foundStores = localCategoryStores;
+                addInsight('info', `Found ${foundStores.length} ${category.replace('_', ' ')} store(s) from cache`);
+            }
+        }
+    }
+    
+    // STEP 2: Now calculate EJV for the found stores or the ZIP
     const params = {
         zip_code: zip,
         store_name: storeName,
@@ -2069,101 +2155,35 @@ async function handleStoreCalculation() {
     };
     
     console.log('Calling calculateEJV with params:', params);
-    
     const result = await calculateEJV(params);
     console.log('EJV Result:', result);
+    
+    // STEP 3: Calculate retention for each store and display
+    foundStores = foundStores.map(store => ({
+        ...store,
+        calculatedRetention: getStoreCalculatedRetention(store)
+    }));
+    
+    // STEP 4: Display results
     displayResults(result);
     
-    // Update map based on search type
+    // STEP 5: Update map with found stores
     if (map) {
-        const retention = result.components.LC_local_circulation;
-        
-        // Priority 1: If company is selected, fetch REAL locations from Overpass API
-        if (company) {
-            addInsight('info', `Fetching real ${COMPANY_NAMES[company] || company} locations from OpenStreetMap...`);
-            const overpassStores = await searchStoresViaOverpass(company, zip);
-            
-            if (overpassStores.length > 0) {
-                return; // searchStoresViaOverpass already shows the stores on map
+        if (foundStores.length > 0) {
+            if (foundStores[0].fromOverpass) {
+                showOverpassStoresOnMap(foundStores, zip);
+            } else {
+                showStoresOnMap(foundStores, zip, result);
             }
-            
-            // Fallback to local database if Overpass returns nothing
-            const companyStores = (STORE_DATABASE[company] || [])
-                .filter(s => s.zip === zip)
-                .map(s => ({ ...s, company, companyName: COMPANY_NAMES[company] }));
-            
-            if (companyStores.length > 0) {
-                showStoresOnMap(companyStores, zip, result);
-                addInsight('warning', `Using cached data: ${companyStores.length} ${COMPANY_NAMES[company]} store(s)`);
-                return;
-            }
+        } else {
+            // No stores found - show the searched ZIP with calculated retention
+            const retention = result.components.LC_local_circulation;
+            const displayName = storeName !== 'Store Analysis' ? storeName : 
+                               (company ? COMPANY_NAMES[company] : 
+                               (category ? category.replace('_', ' ') : 'Store')) + ' (' + zip + ')';
+            addSearchedZipMarker(zip, retention, displayName);
+            addInsight('info', 'No stores found - showing ZIP location with calculated retention');
         }
-        
-        // Priority 2: If store name is entered, search via Overpass
-        if (storeName && storeName !== 'Store Analysis') {
-            addInsight('info', `Searching for "${storeName}" near ZIP ${zip}...`);
-            const overpassStores = await fetchStoresFromOverpass(storeName, zip);
-            
-            if (overpassStores.length > 0) {
-                const storesWithData = overpassStores.map(store => ({
-                    ...store,
-                    company: 'custom',
-                    companyName: storeName,
-                    zip: zip,
-                    calculatedRetention: retention
-                }));
-                showOverpassStoresOnMap(storesWithData, zip);
-                return;
-            }
-            
-            // Fallback to local search
-            const localStores = searchStoresByName(storeName, zip);
-            if (localStores.length > 0) {
-                showStoresOnMap(localStores, zip, result);
-                addInsight('info', `Found ${localStores.length} "${storeName}" store(s) from cache`);
-                return;
-            }
-        }
-        
-        // Priority 3: If category is selected, fetch multiple brands
-        if (category && CATEGORY_STORES[category]) {
-            const categoryCompanies = CATEGORY_STORES[category];
-            let allStores = [];
-            
-            addInsight('info', `Searching for ${category.replace('_', ' ')} stores near ZIP ${zip}...`);
-            
-            // Try to fetch from Overpass for each company in category
-            for (const compKey of categoryCompanies.slice(0, 3)) { // Limit to 3 to avoid rate limiting
-                const stores = await fetchStoresFromOverpass(compKey, zip);
-                allStores = allStores.concat(stores.map(s => ({
-                    ...s,
-                    company: compKey,
-                    companyName: COMPANY_NAMES[compKey] || compKey,
-                    zip: zip,
-                    calculatedRetention: getStoreCalculatedRetention({ company: compKey, isLocal: false })
-                })));
-            }
-            
-            if (allStores.length > 0) {
-                showOverpassStoresOnMap(allStores, zip);
-                addInsight('positive', `Found ${allStores.length} real ${category.replace('_', ' ')} store(s)`);
-                return;
-            }
-            
-            // Fallback to local
-            const localCategoryStores = getStoresByCategoryInZip(category, zip);
-            if (localCategoryStores.length > 0) {
-                showStoresOnMap(localCategoryStores, zip, result);
-                return;
-            }
-        }
-        
-        // Fallback: Show the searched ZIP with calculated retention
-        const displayName = storeName !== 'Store Analysis' ? storeName : 
-                           (company ? COMPANY_NAMES[company] : 
-                           (category ? category.replace('_', ' ') : 'Store')) + ' (' + zip + ')';
-        addSearchedZipMarker(zip, retention, displayName);
-        addInsight('info', 'No stores found - showing ZIP location with calculated retention');
     }
 }
 
