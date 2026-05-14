@@ -102,78 +102,159 @@ const STORE_DATABASE = {
     // Supermarkets
     'costco': [
         { zip: '38126', name: 'Costco Memphis', retention: 38, lat: 35.1175, lng: -90.0568 },
-        { zip: '38127', name: 'Costco North Memphis', retention: 36, lat: 35.2270, lng: -89.9711 }
+        { zip: '38127', name: 'Costco North Memphis', retention: 36, lat: 35.2270, lng: -89.9711 },
+        { zip: '35758', name: 'Costco Madison', retention: 42, lat: 34.6992, lng: -86.7483 },
+        { zip: '35801', name: 'Costco Huntsville', retention: 40, lat: 34.7304, lng: -86.5861 }
     ],
     'whole_foods': [
         { zip: '38117', name: 'Whole Foods East Memphis', retention: 45, lat: 35.1195, lng: -89.9023 },
-        { zip: '38112', name: 'Whole Foods Midtown', retention: 48, lat: 35.1495, lng: -89.9423 }
+        { zip: '38112', name: 'Whole Foods Midtown', retention: 48, lat: 35.1495, lng: -89.9423 },
+        { zip: '35801', name: 'Whole Foods Huntsville', retention: 52, lat: 34.7304, lng: -86.5861 }
     ],
     'trader_joes': [
-        { zip: '38117', name: "Trader Joe's Poplar", retention: 42, lat: 35.1185, lng: -89.9103 }
+        { zip: '38117', name: "Trader Joe's Poplar", retention: 42, lat: 35.1185, lng: -89.9103 },
+        { zip: '35801', name: "Trader Joe's Huntsville", retention: 44, lat: 34.7250, lng: -86.5900 }
     ],
     'walmart': [
         { zip: '38126', name: 'Walmart Supercenter', retention: 22, lat: 35.1155, lng: -90.0508 },
         { zip: '38108', name: 'Walmart Neighborhood', retention: 24, lat: 35.1595, lng: -89.9711 },
-        { zip: '38127', name: 'Walmart Frayser', retention: 21, lat: 35.2270, lng: -89.9611 }
+        { zip: '38127', name: 'Walmart Frayser', retention: 21, lat: 35.2270, lng: -89.9611 },
+        { zip: '35758', name: 'Walmart Madison', retention: 26, lat: 34.6950, lng: -86.7400 },
+        { zip: '35801', name: 'Walmart Huntsville', retention: 24, lat: 34.7350, lng: -86.5800 },
+        { zip: '35802', name: 'Walmart South Huntsville', retention: 25, lat: 34.6870, lng: -86.5342 }
     ],
     'kroger': [
         { zip: '38126', name: 'Kroger Downtown', retention: 28, lat: 35.1145, lng: -90.0528 },
         { zip: '38112', name: 'Kroger Union Ave', retention: 32, lat: 35.1495, lng: -89.9523 },
-        { zip: '38107', name: 'Kroger Chelsea', retention: 30, lat: 35.1684, lng: -90.0350 }
+        { zip: '38107', name: 'Kroger Chelsea', retention: 30, lat: 35.1684, lng: -90.0350 },
+        { zip: '35758', name: 'Kroger Madison', retention: 35, lat: 34.7000, lng: -86.7500 },
+        { zip: '35801', name: 'Kroger Huntsville', retention: 33, lat: 34.7280, lng: -86.5900 }
+    ],
+    'publix': [
+        { zip: '35758', name: 'Publix Madison', retention: 38, lat: 34.6980, lng: -86.7450 },
+        { zip: '35801', name: 'Publix Huntsville', retention: 36, lat: 34.7320, lng: -86.5850 },
+        { zip: '35802', name: 'Publix South Huntsville', retention: 37, lat: 34.6900, lng: -86.5400 }
+    ],
+    'aldi': [
+        { zip: '35758', name: 'ALDI Madison', retention: 32, lat: 34.6970, lng: -86.7420 },
+        { zip: '35801', name: 'ALDI Huntsville', retention: 30, lat: 34.7290, lng: -86.5880 }
     ],
     'target': [
         { zip: '38117', name: 'Target Poplar', retention: 26, lat: 35.1190, lng: -89.8923 },
-        { zip: '38138', name: 'Target Germantown', retention: 29, lat: 35.0867, lng: -89.7970 }
+        { zip: '38138', name: 'Target Germantown', retention: 29, lat: 35.0867, lng: -89.7970 },
+        { zip: '35758', name: 'Target Madison', retention: 30, lat: 34.6960, lng: -86.7460 },
+        { zip: '35801', name: 'Target Huntsville', retention: 28, lat: 34.7310, lng: -86.5870 }
     ],
     'cvs': [
         { zip: '38126', name: 'CVS Pharmacy', retention: 35, lat: 35.1165, lng: -90.0548 },
-        { zip: '38108', name: 'CVS Frayser', retention: 33, lat: 35.1605, lng: -89.9731 }
+        { zip: '38108', name: 'CVS Frayser', retention: 33, lat: 35.1605, lng: -89.9731 },
+        { zip: '35758', name: 'CVS Madison', retention: 36, lat: 34.6985, lng: -86.7470 },
+        { zip: '35801', name: 'CVS Huntsville', retention: 35, lat: 34.7300, lng: -86.5860 }
     ],
     'walgreens': [
         { zip: '38126', name: 'Walgreens', retention: 32, lat: 35.1185, lng: -90.0588 },
-        { zip: '38112', name: 'Walgreens Midtown', retention: 34, lat: 35.1505, lng: -89.9443 }
+        { zip: '38112', name: 'Walgreens Midtown', retention: 34, lat: 35.1505, lng: -89.9443 },
+        { zip: '35758', name: 'Walgreens Madison', retention: 34, lat: 34.6975, lng: -86.7440 },
+        { zip: '35801', name: 'Walgreens Huntsville', retention: 33, lat: 34.7295, lng: -86.5855 }
     ],
     'home_depot': [
         { zip: '38118', name: 'Home Depot S Memphis', retention: 24, lat: 35.0284, lng: -89.9423 },
-        { zip: '38134', name: 'Home Depot Bartlett', retention: 26, lat: 35.2045, lng: -89.8623 }
+        { zip: '38134', name: 'Home Depot Bartlett', retention: 26, lat: 35.2045, lng: -89.8623 },
+        { zip: '35758', name: 'Home Depot Madison', retention: 28, lat: 34.6940, lng: -86.7380 },
+        { zip: '35801', name: 'Home Depot Huntsville', retention: 27, lat: 34.7340, lng: -86.5820 }
     ],
     'lowes': [
-        { zip: '38115', name: "Lowe's Hickory Hill", retention: 25, lat: 35.0595, lng: -89.8911 }
+        { zip: '38115', name: "Lowe's Hickory Hill", retention: 25, lat: 35.0595, lng: -89.8911 },
+        { zip: '35758', name: "Lowe's Madison", retention: 27, lat: 34.6935, lng: -86.7390 },
+        { zip: '35801', name: "Lowe's Huntsville", retention: 26, lat: 34.7335, lng: -86.5830 }
     ],
     'starbucks': [
         { zip: '38126', name: 'Starbucks Downtown', retention: 28, lat: 35.1195, lng: -90.0518 },
         { zip: '38103', name: 'Starbucks Beale St', retention: 30, lat: 35.1398, lng: -90.0534 },
-        { zip: '38112', name: 'Starbucks Overton', retention: 32, lat: 35.1485, lng: -89.9403 }
+        { zip: '38112', name: 'Starbucks Overton', retention: 32, lat: 35.1485, lng: -89.9403 },
+        { zip: '35758', name: 'Starbucks Madison', retention: 32, lat: 34.6990, lng: -86.7475 },
+        { zip: '35801', name: 'Starbucks Huntsville', retention: 31, lat: 34.7305, lng: -86.5865 }
     ],
     'mcdonalds': [
         { zip: '38126', name: "McDonald's Downtown", retention: 18, lat: 35.1155, lng: -90.0538 },
-        { zip: '38108', name: "McDonald's Frayser", retention: 16, lat: 35.1585, lng: -89.9701 }
+        { zip: '38108', name: "McDonald's Frayser", retention: 16, lat: 35.1585, lng: -89.9701 },
+        { zip: '35758', name: "McDonald's Madison", retention: 20, lat: 34.6988, lng: -86.7465 },
+        { zip: '35801', name: "McDonald's Huntsville", retention: 19, lat: 34.7308, lng: -86.5858 }
     ],
     'chipotle': [
-        { zip: '38117', name: 'Chipotle East Memphis', retention: 26, lat: 35.1195, lng: -89.9053 }
+        { zip: '38117', name: 'Chipotle East Memphis', retention: 26, lat: 35.1195, lng: -89.9053 },
+        { zip: '35758', name: 'Chipotle Madison', retention: 28, lat: 34.6995, lng: -86.7478 },
+        { zip: '35801', name: 'Chipotle Huntsville', retention: 27, lat: 34.7302, lng: -86.5868 }
+    ],
+    '7_eleven': [
+        { zip: '35758', name: '7-Eleven Madison', retention: 22, lat: 34.6982, lng: -86.7455 },
+        { zip: '35801', name: '7-Eleven Huntsville', retention: 21, lat: 34.7298, lng: -86.5862 }
+    ],
+    'wawa': [
+        { zip: '35758', name: 'Wawa Madison', retention: 30, lat: 34.6978, lng: -86.7448 }
     ],
     'local_grocery': [
         { zip: '38126', name: 'Soulsville Grocery Co-op', retention: 72, lat: 35.1135, lng: -90.0548, isLocal: true },
         { zip: '38108', name: 'Memphis Urban Farms Market', retention: 78, lat: 35.1615, lng: -89.9721, isLocal: true },
-        { zip: '38107', name: 'North Memphis Food Hub', retention: 68, lat: 35.1704, lng: -90.0330, isLocal: true }
+        { zip: '38107', name: 'North Memphis Food Hub', retention: 68, lat: 35.1704, lng: -90.0330, isLocal: true },
+        { zip: '35758', name: 'Madison Farmers Market', retention: 75, lat: 34.6965, lng: -86.7435, isLocal: true },
+        { zip: '35801', name: 'Huntsville Local Grocery', retention: 70, lat: 34.7285, lng: -86.5845, isLocal: true }
     ],
     'worker_cooperative': [
-        { zip: '38126', name: 'Community Ownership Co-op', retention: 85, lat: 35.1125, lng: -90.0558, isLocal: true }
+        { zip: '38126', name: 'Community Ownership Co-op', retention: 85, lat: 35.1125, lng: -90.0558, isLocal: true },
+        { zip: '35801', name: 'Huntsville Worker Co-op', retention: 82, lat: 34.7275, lng: -86.5840, isLocal: true }
     ]
 };
 
 // Category to stores mapping
 const CATEGORY_STORES = {
-    'supermarket': ['walmart', 'kroger', 'whole_foods', 'trader_joes'],
-    'warehouse_club': ['costco'],
+    'supermarket': ['walmart', 'kroger', 'whole_foods', 'trader_joes', 'safeway', 'publix', 'aldi', 'wegmans'],
+    'warehouse_club': ['costco', 'sams_club'],
     'department_store': ['target'],
     'pharmacy': ['cvs', 'walgreens'],
     'home_improvement': ['home_depot', 'lowes'],
     'coffee_shop': ['starbucks'],
     'fast_food': ['mcdonalds'],
     'fast_casual': ['chipotle'],
+    'convenience': ['7_eleven', 'wawa'],
     'local_grocery': ['local_grocery'],
     'worker_cooperative': ['worker_cooperative']
+};
+
+// Company to category mapping (reverse lookup)
+const COMPANY_CATEGORY = {
+    'costco': 'warehouse_club', 'sams_club': 'warehouse_club',
+    'whole_foods': 'supermarket', 'trader_joes': 'supermarket',
+    'walmart': 'supermarket', 'kroger': 'supermarket',
+    'safeway': 'supermarket', 'publix': 'supermarket',
+    'aldi': 'supermarket', 'wegmans': 'supermarket',
+    'target': 'department_store',
+    'cvs': 'pharmacy', 'walgreens': 'pharmacy',
+    '7_eleven': 'convenience', 'wawa': 'convenience',
+    'home_depot': 'home_improvement', 'lowes': 'home_improvement',
+    'starbucks': 'coffee_shop',
+    'mcdonalds': 'fast_food',
+    'chipotle': 'fast_casual',
+    'local_grocery': 'local_grocery',
+    'worker_cooperative': 'worker_cooperative'
+};
+
+// Company display names
+const COMPANY_NAMES = {
+    'costco': 'Costco', 'sams_club': "Sam's Club",
+    'whole_foods': 'Whole Foods', 'trader_joes': "Trader Joe's",
+    'walmart': 'Walmart', 'kroger': 'Kroger',
+    'safeway': 'Safeway', 'publix': 'Publix',
+    'aldi': 'ALDI', 'wegmans': 'Wegmans',
+    'target': 'Target',
+    'cvs': 'CVS', 'walgreens': 'Walgreens',
+    '7_eleven': '7-Eleven', 'wawa': 'Wawa',
+    'home_depot': 'Home Depot', 'lowes': "Lowe's",
+    'starbucks': 'Starbucks',
+    'mcdonalds': "McDonald's",
+    'chipotle': 'Chipotle',
+    'local_grocery': 'Local Grocery',
+    'worker_cooperative': 'Worker Co-op'
 };
 
 // Impact band definitions
@@ -1272,6 +1353,165 @@ function updateMarkerLocation(coords, retention, storeName, zip) {
 }
 
 /**
+ * Filter companies dropdown by selected category
+ */
+function filterCompaniesByCategory(category) {
+    const companySelect = document.getElementById('storeCompany');
+    const currentValue = companySelect.value;
+    
+    // Store all company options (preserve original list)
+    if (!window.allCompanyOptions) {
+        window.allCompanyOptions = Array.from(companySelect.options).map(opt => ({
+            value: opt.value,
+            text: opt.text
+        }));
+    }
+    
+    // Clear and rebuild options
+    companySelect.innerHTML = '';
+    
+    // Add default option
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.text = category ? `-- ${category.replace('_', ' ')} Companies --` : '-- Select Company --';
+    companySelect.appendChild(defaultOpt);
+    
+    if (category && CATEGORY_STORES[category]) {
+        // Show only companies in this category
+        const categoryCompanies = CATEGORY_STORES[category];
+        categoryCompanies.forEach(compKey => {
+            const opt = document.createElement('option');
+            opt.value = compKey;
+            opt.text = COMPANY_NAMES[compKey] || compKey;
+            companySelect.appendChild(opt);
+        });
+        addInsight('info', `Showing ${categoryCompanies.length} companies in ${category.replace('_', ' ')}`);
+    } else {
+        // Show all companies
+        window.allCompanyOptions.forEach(opt => {
+            if (opt.value) {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.text = opt.text;
+                companySelect.appendChild(option);
+            }
+        });
+    }
+    
+    // Restore selection if still valid
+    if (currentValue && Array.from(companySelect.options).some(o => o.value === currentValue)) {
+        companySelect.value = currentValue;
+    }
+}
+
+/**
+ * Search for stores by name across all companies
+ * Returns array of matching stores with their company info
+ */
+function searchStoresByName(searchName, filterZip = null) {
+    const results = [];
+    const searchLower = searchName.toLowerCase();
+    
+    Object.keys(STORE_DATABASE).forEach(companyKey => {
+        const stores = STORE_DATABASE[companyKey] || [];
+        stores.forEach(store => {
+            // Check if store name matches (partial match)
+            if (store.name.toLowerCase().includes(searchLower)) {
+                // If filterZip is provided, only include stores in that ZIP
+                if (!filterZip || store.zip === filterZip) {
+                    results.push({
+                        ...store,
+                        company: companyKey,
+                        companyName: COMPANY_NAMES[companyKey] || companyKey
+                    });
+                }
+            }
+        });
+    });
+    
+    return results;
+}
+
+/**
+ * Show multiple stores on the map with their retention values
+ */
+function showStoresOnMap(stores, highlightZip = null) {
+    clearMapMarkers();
+    
+    if (stores.length === 0) {
+        addInsight('warning', 'No stores found matching your search');
+        return;
+    }
+    
+    stores.forEach(store => {
+        const color = getRetentionColor(store.retention);
+        const isHighlighted = highlightZip && store.zip === highlightZip;
+        
+        const marker = L.circleMarker([store.lat, store.lng], {
+            radius: isHighlighted ? 32 : 26,
+            fillColor: color,
+            color: isHighlighted ? '#1a3d16' : '#fff',
+            weight: isHighlighted ? 3 : 2,
+            opacity: 1,
+            fillOpacity: 0.9
+        }).addTo(map);
+        
+        const localBadge = store.isLocal ? '<span style="background:#4caf50;color:white;padding:2px 6px;border-radius:4px;font-size:10px;">LOCAL</span><br>' : '';
+        const companyBadge = store.companyName ? `<span style="font-size:10px;color:#666;">${store.companyName}</span><br>` : '';
+        
+        marker.bindPopup(`
+            <div style="text-align:center;min-width:150px;">
+                ${localBadge}
+                <strong style="font-size:13px;">${store.name}</strong><br>
+                ${companyBadge}
+                <span style="font-size:11px;color:#666;">ZIP: ${store.zip}</span><br>
+                <span style="font-size:20px;font-weight:bold;color:${color}">${store.retention}%</span><br>
+                <span style="font-size:11px;color:#666;">Local Retention</span>
+            </div>
+        `);
+        
+        marker.bindTooltip(`<b>${store.name.split(' ')[0]}</b><br>${store.retention}%`, {
+            permanent: true,
+            direction: 'center',
+            className: 'zip-tooltip'
+        });
+        
+        markers.push(marker);
+    });
+    
+    // Fit bounds to show all markers
+    if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.2));
+    }
+    
+    addInsight('positive', `Found ${stores.length} store(s) matching your search`);
+}
+
+/**
+ * Get all stores in a category for a specific ZIP
+ */
+function getStoresByCategoryInZip(category, zip) {
+    const companyKeys = CATEGORY_STORES[category] || [];
+    const results = [];
+    
+    companyKeys.forEach(compKey => {
+        const stores = STORE_DATABASE[compKey] || [];
+        stores.forEach(store => {
+            if (store.zip === zip) {
+                results.push({
+                    ...store,
+                    company: compKey,
+                    companyName: COMPANY_NAMES[compKey] || compKey
+                });
+            }
+        });
+    });
+    
+    return results;
+}
+
+/**
  * Search by ZIP code - shows the searched ZIP on map with retention %
  */
 window.searchZip = async function(zip) {
@@ -1333,15 +1573,48 @@ async function handleStoreCalculation() {
     
     // Update map based on search type
     if (map) {
-        // Use actual LC (Local Circulation) component for retention
         const retention = result.components.LC_local_circulation;
+        let storesFound = [];
         
-        // Always show the searched ZIP location with the user's store name
-        // This ensures the user sees their actual search location, not pre-defined Memphis stores
-        const displayName = storeName || (company ? company.replace('_', ' ') : 'Store') + ' (' + zip + ')';
+        // Priority 1: If store name is entered (not default), search for stores by name
+        if (storeName && storeName !== 'Store Analysis') {
+            storesFound = searchStoresByName(storeName, zip);
+            if (storesFound.length > 0) {
+                showStoresOnMap(storesFound, zip);
+                addInsight('info', `Found ${storesFound.length} "${storeName}" store(s) in ZIP ${zip}`);
+                return;
+            }
+        }
+        
+        // Priority 2: If company is selected, show all stores of that company in the ZIP
+        if (company) {
+            const companyStores = (STORE_DATABASE[company] || [])
+                .filter(s => s.zip === zip)
+                .map(s => ({ ...s, company, companyName: COMPANY_NAMES[company] }));
+            
+            if (companyStores.length > 0) {
+                showStoresOnMap(companyStores, zip);
+                addInsight('info', `Found ${companyStores.length} ${COMPANY_NAMES[company]} store(s) in ZIP ${zip}`);
+                return;
+            }
+        }
+        
+        // Priority 3: If category is selected, show all stores in that category for the ZIP
+        if (category) {
+            storesFound = getStoresByCategoryInZip(category, zip);
+            if (storesFound.length > 0) {
+                showStoresOnMap(storesFound, zip);
+                addInsight('info', `Found ${storesFound.length} ${category.replace('_', ' ')} store(s) in ZIP ${zip}`);
+                return;
+            }
+        }
+        
+        // Fallback: Show the searched ZIP with calculated retention
+        const displayName = storeName !== 'Store Analysis' ? storeName : 
+                           (company ? COMPANY_NAMES[company] : 
+                           (category ? category.replace('_', ' ') : 'Store')) + ' (' + zip + ')';
         addSearchedZipMarker(zip, retention, displayName);
-        
-        addInsight('info', 'Map updated for ZIP ' + zip);
+        addInsight('info', 'Showing calculated retention for ZIP ' + zip);
     }
 }
 
@@ -1385,19 +1658,15 @@ function init() {
         });
     });
     
+    // Filter companies when category is selected
+    document.getElementById('storeCategory').addEventListener('change', (e) => {
+        filterCompaniesByCategory(e.target.value);
+    });
+    
     // Auto-select category when company is selected
     document.getElementById('storeCompany').addEventListener('change', (e) => {
-        const cats = {
-            'costco': 'warehouse_club', 'sams_club': 'warehouse_club',
-            'whole_foods': 'supermarket', 'trader_joes': 'supermarket',
-            'walmart': 'supermarket', 'kroger': 'supermarket',
-            'target': 'department_store', 'cvs': 'pharmacy', 'walgreens': 'pharmacy',
-            '7_eleven': 'convenience', 'wawa': 'convenience',
-            'home_depot': 'home_improvement', 'lowes': 'home_improvement',
-            'starbucks': 'coffee_shop', 'mcdonalds': 'fast_food', 'chipotle': 'fast_casual'
-        };
-        if (cats[e.target.value]) {
-            document.getElementById('storeCategory').value = cats[e.target.value];
+        if (COMPANY_CATEGORY[e.target.value]) {
+            document.getElementById('storeCategory').value = COMPANY_CATEGORY[e.target.value];
         }
     });
     
