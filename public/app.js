@@ -1132,16 +1132,62 @@ function estimateZipCoords(zip) {
 /**
  * Add a single searched ZIP to map with its retention %
  */
+/**
+ * Geocode a ZIP code using Nominatim (OpenStreetMap) API
+ * Returns accurate lat/lng for the ZIP code
+ */
+async function geocodeZip(zip) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json&limit=1`,
+            { headers: { 'User-Agent': 'FIX-GeoEquity-Dashboard/1.0' } }
+        );
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.length > 0) {
+                return {
+                    lat: parseFloat(data[0].lat),
+                    lng: parseFloat(data[0].lon),
+                    name: data[0].display_name.split(',').slice(0, 2).join(','),
+                    geocoded: true
+                };
+            }
+        }
+    } catch (error) {
+        console.warn('Geocoding failed, using estimate:', error);
+    }
+    
+    // Fall back to estimate if geocoding fails
+    return { ...estimateZipCoords(zip), geocoded: false };
+}
+
 function addSearchedZipMarker(zip, retention, storeName = null) {
-    // Get coordinates - use predefined if available, otherwise estimate
-    let coords = ZIP_COORDS[zip];
+    // Get coordinates - use predefined if available, otherwise geocode
+    let coords = ZIP_DATA[zip];
     let isEstimated = false;
     
-    if (!coords || coords === ZIP_COORDS.default) {
+    if (!coords) {
+        // Try to geocode the ZIP for accurate location
+        geocodeZip(zip).then(geocodedCoords => {
+            // Update the marker with accurate coordinates
+            if (geocodedCoords.geocoded) {
+                updateMarkerLocation(geocodedCoords, retention, storeName, zip);
+                // Cache for future use
+                ZIP_DATA[zip] = { 
+                    ...geocodedCoords, 
+                    population: 25000, 
+                    medianIncome: 65000, 
+                    unemployment: 4.0, 
+                    businesses: 500, 
+                    totalSpend: 100 
+                };
+            }
+        });
+        
+        // Use estimate initially while geocoding
         coords = estimateZipCoords(zip);
         isEstimated = true;
-        // Store for future use
-        ZIP_COORDS[zip] = { ...coords, retention: retention };
     }
     
     clearMapMarkers();
@@ -1182,6 +1228,47 @@ function addSearchedZipMarker(zip, retention, storeName = null) {
     map.setView([coords.lat, coords.lng], 12);
     
     return coords;
+}
+
+/**
+ * Update marker location after geocoding completes
+ */
+function updateMarkerLocation(coords, retention, storeName, zip) {
+    clearMapMarkers();
+    
+    const color = getRetentionColor(retention);
+    
+    const marker = L.circleMarker([coords.lat, coords.lng], {
+        radius: 35,
+        fillColor: color,
+        color: '#1a3d16',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.9
+    }).addTo(map);
+    
+    const displayName = storeName || `ZIP ${zip}`;
+    
+    marker.bindPopup(`
+        <div style="text-align:center;min-width:140px;">
+            <strong style="font-size:14px;">${displayName}</strong><br>
+            <span style="font-size:12px;color:#666;">ZIP: ${zip}</span><br>
+            <span style="font-size:10px;color:#2e7d32;">${coords.name || 'Location verified'}</span><br>
+            <span style="font-size:24px;font-weight:bold;color:${color}">${retention.toFixed(1)}%</span><br>
+            <span style="font-size:12px;color:#666;">Local Retention</span>
+        </div>
+    `).openPopup();
+    
+    marker.bindTooltip(`<b>${zip}</b><br>${retention.toFixed(0)}%`, {
+        permanent: true,
+        direction: 'center',
+        className: 'zip-tooltip'
+    });
+    
+    markers.push(marker);
+    map.setView([coords.lat, coords.lng], 12);
+    
+    addInsight('positive', `Location verified: ${coords.name || zip}`);
 }
 
 /**
