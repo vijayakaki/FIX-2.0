@@ -1440,19 +1440,46 @@ async function fetchStoresFromOverpass(storeName, zip) {
         
         console.log('Overpass query:', query);
         
-        // Use CORS proxy to access Overpass API
+        // Try multiple CORS proxies in order
         const overpassUrl = 'https://overpass-api.de/api/interpreter';
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(overpassUrl);
+        const proxies = [
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(overpassUrl + '?data=' + encodeURIComponent(query))}`,
+            `https://corsproxy.io/?${encodeURIComponent(overpassUrl)}`
+        ];
         
-        const response = await fetch(proxyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'data=' + encodeURIComponent(query)
-        });
+        let response = null;
+        let lastError = null;
         
-        if (!response.ok) {
-            console.error('Overpass API error:', response.status, response.statusText);
-            addInsight('warning', `Overpass API returned status ${response.status}`);
+        for (const proxyUrl of proxies) {
+            try {
+                console.log('Trying proxy:', proxyUrl.substring(0, 50) + '...');
+                
+                if (proxyUrl.includes('allorigins')) {
+                    // allorigins uses GET with URL param
+                    response = await fetch(proxyUrl, { method: 'GET' });
+                } else {
+                    // corsproxy uses POST
+                    response = await fetch(proxyUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'data=' + encodeURIComponent(query)
+                    });
+                }
+                
+                if (response.ok) {
+                    console.log('Proxy succeeded');
+                    break;
+                }
+            } catch (err) {
+                console.warn('Proxy failed:', err.message);
+                lastError = err;
+                response = null;
+            }
+        }
+        
+        if (!response || !response.ok) {
+            console.error('All proxies failed');
+            addInsight('warning', `Store search failed - proxy error`);
             return [];
         }
         
