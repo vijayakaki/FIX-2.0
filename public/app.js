@@ -1371,159 +1371,50 @@ function estimateZipCoords(zip) {
 }
 
 /**
- * Fetch actual store locations from OpenStreetMap using Overpass API
+ * Fetch actual store locations from OpenStreetMap via backend API
  * @param {string} storeName - Store brand name (e.g., "Walmart", "Costco")
  * @param {string} zip - ZIP code to search around
  * @returns {Promise<Array>} Array of store locations with lat/lng
  */
 async function fetchStoresFromOverpass(storeName, zip) {
     try {
-        // First, geocode the ZIP code to get accurate coordinates
-        let zipCoords;
-        if (ZIP_DATA[zip]) {
-            zipCoords = ZIP_DATA[zip];
-        } else {
-            zipCoords = await geocodeZip(zip);
-        }
+        console.log(`Fetching ${storeName} stores near ZIP ${zip} from API...`);
         
-        const lat = zipCoords.lat;
-        const lng = zipCoords.lng;
-        
-        console.log(`Searching Overpass near ZIP ${zip}: lat=${lat}, lng=${lng}`);
-        
-        // Larger search radius ~25km to find more stores
-        const radius = 25000;
-        
-        // Map store names to OSM brand names and common variations
-        const osmBrandMap = {
-            'walmart': ['Walmart', 'Walmart Supercenter', 'Walmart Neighborhood Market'],
-            'costco': ['Costco', 'Costco Wholesale'],
-            'target': ['Target'],
-            'kroger': ['Kroger'],
-            'publix': ['Publix'],
-            'whole_foods': ['Whole Foods', 'Whole Foods Market'],
-            'trader_joes': ["Trader Joe's", "Trader Joes"],
-            'aldi': ['ALDI', 'Aldi'],
-            'cvs': ['CVS', 'CVS Pharmacy'],
-            'walgreens': ['Walgreens'],
-            'home_depot': ['The Home Depot', 'Home Depot'],
-            'lowes': ["Lowe's", "Lowes", "Lowe's Home Improvement"],
-            'starbucks': ['Starbucks', 'Starbucks Coffee'],
-            'mcdonalds': ["McDonald's", "McDonalds"],
-            'chipotle': ['Chipotle', 'Chipotle Mexican Grill'],
-            '7_eleven': ['7-Eleven', '7 Eleven'],
-            'wawa': ['Wawa'],
-            'safeway': ['Safeway'],
-            'wegmans': ['Wegmans'],
-            'sams_club': ["Sam's Club", "Sams Club"],
-            'best_buy': ['Best Buy'],
-            'apple': ['Apple Store', 'Apple'],
-            'chick_fil_a': ['Chick-fil-A', 'Chick fil A']
-        };
-        
-        // Get brand names to search for
-        const brandNames = osmBrandMap[storeName.toLowerCase()] || [storeName];
-        const brandRegex = brandNames.join('|');
-        
-        // Overpass API query - search for brand OR name containing any variation
-        const query = `
-            [out:json][timeout:25];
-            (
-                node["brand"~"${brandRegex}",i](around:${radius},${lat},${lng});
-                node["name"~"${brandRegex}",i](around:${radius},${lat},${lng});
-                way["brand"~"${brandRegex}",i](around:${radius},${lat},${lng});
-                way["name"~"${brandRegex}",i](around:${radius},${lat},${lng});
-                relation["brand"~"${brandRegex}",i](around:${radius},${lat},${lng});
-            );
-            out center body;
-        `;
-        
-        console.log('Overpass query:', query);
-        
-        // Use our Vercel serverless proxy
-        const response = await fetch('/api/proxy/overpass', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query })
-        });
+        const response = await fetch(`${API_BASE}/api/v1/stores?company=${encodeURIComponent(storeName)}&zip=${zip}&radius=25000`);
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error('Proxy error:', response.status, errorData);
+            console.error('Store API error:', response.status, errorData);
             addInsight('warning', `Store search failed: ${errorData.error || response.status}`);
             return [];
         }
         
         const data = await response.json();
-        console.log('Overpass raw response:', data);
+        console.log('Store API response:', data);
         
-        if (!data.elements || data.elements.length === 0) {
-            console.log(`No ${storeName} stores found via Overpass API within ${radius/1000}km`);
+        if (!data.stores || data.stores.length === 0) {
+            console.log(`No ${storeName} stores found within 25km`);
             return [];
         }
         
-        // Parse results - extract coordinates from nodes, ways, and relations
-        const stores = data.elements.map(element => {
-            let storeLat, storeLng;
-            
-            // Handle different element types
-            if (element.type === 'node') {
-                storeLat = element.lat;
-                storeLng = element.lon;
-            } else if (element.type === 'way' || element.type === 'relation') {
-                // Ways and relations need center coordinates
-                if (element.center) {
-                    storeLat = element.center.lat;
-                    storeLng = element.center.lon;
-                } else if (element.bounds) {
-                    // Calculate center from bounds
-                    storeLat = (element.bounds.minlat + element.bounds.maxlat) / 2;
-                    storeLng = (element.bounds.minlon + element.bounds.maxlon) / 2;
-                } else {
-                    console.warn('Element has no coordinates:', element);
-                    return null;
-                }
-            } else {
-                return null;
-            }
-            
-            // Validate coordinates
-            if (typeof storeLat !== 'number' || typeof storeLng !== 'number' || 
-                isNaN(storeLat) || isNaN(storeLng)) {
-                console.warn('Invalid coordinates for element:', element);
-                return null;
-            }
-            
-            const tags = element.tags || {};
-            
-            return {
-                lat: storeLat,
-                lng: storeLng,
-                name: tags.name || tags.brand || brandNames[0],
-                address: tags['addr:housenumber'] 
-                    ? `${tags['addr:housenumber']} ${tags['addr:street'] || ''}`
-                    : tags['addr:street'] || '',
-                city: tags['addr:city'] || '',
-                state: tags['addr:state'] || '',
-                osmId: element.id,
-                osmType: element.type,
-                fromOverpass: true
-            };
-        }).filter(s => s !== null);
+        // Map to expected format
+        const stores = data.stores.map(store => ({
+            lat: store.lat,
+            lng: store.lng,
+            name: store.name,
+            address: store.address || '',
+            city: store.city || '',
+            state: store.state || '',
+            osmId: store.osm_id,
+            osmType: store.osm_type,
+            fromOverpass: true
+        }));
         
-        console.log(`Found ${stores.length} ${brandNames[0]} locations via Overpass API`);
-        
-        // Sort by distance from ZIP centroid
-        stores.sort((a, b) => {
-            const distA = Math.sqrt(Math.pow(a.lat - lat, 2) + Math.pow(a.lng - lng, 2));
-            const distB = Math.sqrt(Math.pow(b.lat - lat, 2) + Math.pow(b.lng - lng, 2));
-            return distA - distB;
-        });
-        
+        console.log(`Found ${stores.length} ${storeName} locations from OpenStreetMap`);
         return stores;
         
     } catch (error) {
-        console.error('Overpass API fetch failed:', error);
+        console.error('Store fetch failed:', error);
         addInsight('warning', `Store search failed: ${error.message}`);
         return [];
     }

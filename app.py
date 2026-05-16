@@ -1068,6 +1068,178 @@ def api_impact_bands():
     return jsonify({"impact_bands": IMPACT_BANDS})
 
 
+@app.route("/api/v1/stores", methods=["GET"])
+def api_get_stores():
+    """
+    Fetch real store locations from OpenStreetMap via Overpass API.
+    
+    Query params:
+        company: Store brand name (e.g., "walmart", "costco")
+        zip: ZIP code to search around
+        radius: Search radius in meters (default: 25000)
+    
+    Returns list of stores with real lat/lng from OSM.
+    """
+    import requests as http_requests
+    
+    company = request.args.get("company", "").strip()
+    zip_code = request.args.get("zip", "").strip()
+    radius = int(request.args.get("radius", 25000))
+    
+    if not company:
+        return jsonify({"error": "Missing company parameter"}), 400
+    if not zip_code or len(zip_code) != 5:
+        return jsonify({"error": "Invalid ZIP code"}), 400
+    
+    # Map company keys to OSM brand names
+    BRAND_MAP = {
+        "walmart": ["Walmart", "Walmart Supercenter", "Walmart Neighborhood Market"],
+        "costco": ["Costco", "Costco Wholesale"],
+        "target": ["Target"],
+        "kroger": ["Kroger"],
+        "publix": ["Publix"],
+        "whole_foods": ["Whole Foods", "Whole Foods Market"],
+        "trader_joes": ["Trader Joe's"],
+        "aldi": ["ALDI", "Aldi"],
+        "cvs": ["CVS", "CVS Pharmacy"],
+        "walgreens": ["Walgreens"],
+        "home_depot": ["The Home Depot", "Home Depot"],
+        "lowes": ["Lowe's", "Lowes"],
+        "starbucks": ["Starbucks"],
+        "mcdonalds": ["McDonald's"],
+        "sams_club": ["Sam's Club"],
+        "best_buy": ["Best Buy"],
+    }
+    
+    # ZIP code coordinates (fallback)
+    ZIP_COORDS = {
+        "38126": (35.1175, -90.0568),
+        "38108": (35.1595, -89.9711),
+        "38127": (35.2270, -89.9711),
+        "35758": (34.6992, -86.7483),
+        "35801": (34.7304, -86.5861),
+        "10001": (40.7506, -73.9971),
+        "90210": (34.0901, -118.4065),
+        "60601": (41.8819, -87.6278),
+    }
+    
+    # Get ZIP coordinates - try Nominatim first
+    lat, lng = None, None
+    try:
+        geo_response = http_requests.get(
+            f"https://nominatim.openstreetmap.org/search",
+            params={"postalcode": zip_code, "country": "US", "format": "json", "limit": 1},
+            headers={"User-Agent": "FIX-GeoEquity-Dashboard/1.0"},
+            timeout=5
+        )
+        if geo_response.ok:
+            geo_data = geo_response.json()
+            if geo_data:
+                lat = float(geo_data[0]["lat"])
+                lng = float(geo_data[0]["lon"])
+    except Exception as e:
+        logger.warning(f"Nominatim geocoding failed: {e}")
+    
+    # Fallback to hardcoded coords
+    if lat is None:
+        coords = ZIP_COORDS.get(zip_code, (39.8283, -98.5795))
+        lat, lng = coords
+    
+    # Build brand regex
+    brand_names = BRAND_MAP.get(company.lower(), [company])
+    brand_regex = "|".join(brand_names)
+    
+    # Overpass query
+    query = f"""
+    [out:json][timeout:25];
+    (
+        node["brand"~"{brand_regex}",i](around:{radius},{lat},{lng});
+        node["name"~"{brand_regex}",i](around:{radius},{lat},{lng});
+        way["brand"~"{brand_regex}",i](around:{radius},{lat},{lng});
+        way["name"~"{brand_regex}",i](around:{radius},{lat},{lng});
+    );
+    out center body;
+    """
+    
+    try:
+        overpass_response = http_requests.post(
+            "https://overpass-api.de/api/interpreter",
+            data={"data": query},
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "FIX-GeoEquity-Dashboard/1.0",
+                "Accept": "*/*"
+            },
+            timeout=30
+        )
+        
+        if not overpass_response.ok:
+            return jsonify({
+                "error": f"Overpass API error: {overpass_response.status_code}",
+                "stores": []
+            }), 200
+        
+        data = overpass_response.json()
+        elements = data.get("elements", [])
+        
+        stores = []
+        seen_ids = set()
+        
+        for el in elements:
+            # Skip duplicates
+            if el.get("id") in seen_ids:
+                continue
+            seen_ids.add(el.get("id"))
+            
+            # Get coordinates
+            if el["type"] == "node":
+                store_lat = el.get("lat")
+                store_lng = el.get("lon")
+            elif el["type"] == "way" and "center" in el:
+                store_lat = el["center"].get("lat")
+                store_lng = el["center"].get("lon")
+            else:
+                continue
+            
+            if store_lat is None or store_lng is None:
+                continue
+            
+            tags = el.get("tags", {})
+            name = tags.get("name") or tags.get("brand") or brand_names[0]
+            
+            # Skip non-store entries (like garden centers, pharmacies inside stores)
+            if "Garden Center" in name or "Pharmacy" in name:
+                continue
+            
+            stores.append({
+                "lat": store_lat,
+                "lng": store_lng,
+                "name": name,
+                "address": f"{tags.get('addr:housenumber', '')} {tags.get('addr:street', '')}".strip(),
+                "city": tags.get("addr:city", ""),
+                "state": tags.get("addr:state", ""),
+                "osm_id": el.get("id"),
+                "osm_type": el["type"]
+            })
+        
+        # Sort by distance from ZIP center
+        stores.sort(key=lambda s: ((s["lat"] - lat) ** 2 + (s["lng"] - lng) ** 2))
+        
+        return jsonify({
+            "stores": stores,
+            "count": len(stores),
+            "search_center": {"lat": lat, "lng": lng},
+            "radius_m": radius,
+            "company": company
+        })
+        
+    except http_requests.exceptions.Timeout:
+        return jsonify({"error": "Overpass API timeout", "stores": []}), 200
+    except Exception as e:
+        logger.error(f"Store fetch failed: {e}")
+        return jsonify({"error": str(e), "stores": []}), 200
+
+
 @app.route("/api/overpass", methods=["POST", "OPTIONS"])
 @app.route("/api/proxy/overpass", methods=["POST", "OPTIONS"])
 def api_overpass_proxy():
