@@ -1145,23 +1145,20 @@ def api_get_stores():
         coords = ZIP_COORDS.get(zip_code, (39.8283, -98.5795))
         lat, lng = coords
     
-    # Build brand regex
+    # Build brand regex - simplified for faster queries
     brand_names = BRAND_MAP.get(company.lower(), [company])
-    brand_regex = "|".join(brand_names)
+    # Use just the primary brand name for faster queries
+    primary_brand = brand_names[0]
     
-    # Overpass query
-    query = f"""
-    [out:json][timeout:25];
-    (
-        node["brand"~"{brand_regex}",i](around:{radius},{lat},{lng});
-        node["name"~"{brand_regex}",i](around:{radius},{lat},{lng});
-        way["brand"~"{brand_regex}",i](around:{radius},{lat},{lng});
-        way["name"~"{brand_regex}",i](around:{radius},{lat},{lng});
-    );
-    out center body;
-    """
+    # Simplified Overpass query - search only by brand tag
+    query = f"""[out:json][timeout:15];
+(
+  nwr["brand"~"{primary_brand}",i](around:{radius},{lat},{lng});
+);
+out center;"""
     
     try:
+        # Try primary Overpass server
         overpass_response = http_requests.post(
             "https://overpass-api.de/api/interpreter",
             data={"data": query},
@@ -1170,7 +1167,7 @@ def api_get_stores():
                 "User-Agent": "FIX-GeoEquity-Dashboard/1.0",
                 "Accept": "*/*"
             },
-            timeout=30
+            timeout=20
         )
         
         if not overpass_response.ok:
@@ -1191,11 +1188,11 @@ def api_get_stores():
                 continue
             seen_ids.add(el.get("id"))
             
-            # Get coordinates
+            # Get coordinates based on element type
             if el["type"] == "node":
                 store_lat = el.get("lat")
                 store_lng = el.get("lon")
-            elif el["type"] == "way" and "center" in el:
+            elif el["type"] in ("way", "relation") and "center" in el:
                 store_lat = el["center"].get("lat")
                 store_lng = el["center"].get("lon")
             else:
@@ -1205,10 +1202,10 @@ def api_get_stores():
                 continue
             
             tags = el.get("tags", {})
-            name = tags.get("name") or tags.get("brand") or brand_names[0]
+            name = tags.get("name") or tags.get("brand") or primary_brand
             
-            # Skip non-store entries (like garden centers, pharmacies inside stores)
-            if "Garden Center" in name or "Pharmacy" in name:
+            # Skip sub-store entries (like garden centers, pharmacies inside stores)
+            if "Garden Center" in name or "Pharmacy" in name or "ATM" in name:
                 continue
             
             stores.append({
