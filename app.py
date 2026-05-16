@@ -60,8 +60,8 @@ from company_data import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Flask app setup
-app = Flask(__name__)
+# Flask app setup - serve static files from 'public' folder for local development
+app = Flask(__name__, static_folder='public', static_url_path='')
 CORS(app)
 
 
@@ -883,7 +883,12 @@ def calculate_ejv(store_id: str = "",
 
 @app.route("/")
 def index():
-    """API health check and info."""
+    """Serve the frontend for local development or API info for API calls."""
+    # Check if it's a browser request (wants HTML) or API request (wants JSON)
+    if request.accept_mimetypes.accept_html and not request.accept_mimetypes.accept_json:
+        return app.send_static_file('index.html')
+    
+    # For API clients or curl, return JSON
     return jsonify({
         "name": "FIX$ GeoEquity Impact Engine",
         "version": EJV_VERSION,
@@ -1064,6 +1069,7 @@ def api_impact_bands():
 
 
 @app.route("/api/overpass", methods=["POST", "OPTIONS"])
+@app.route("/api/proxy/overpass", methods=["POST", "OPTIONS"])
 def api_overpass_proxy():
     """Proxy requests to Overpass API to avoid CORS issues."""
     import requests as http_requests
@@ -1094,7 +1100,11 @@ def api_overpass_proxy():
         overpass_response = http_requests.post(
             "https://overpass-api.de/api/interpreter",
             data={"data": query},
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "FIX-GeoEquity-Dashboard/1.0",
+                "Accept": "*/*"
+            },
             timeout=30
         )
         
