@@ -1068,7 +1068,7 @@ function updateKPIs(result) {
     
     document.getElementById('kpiLocalRetention').textContent = retention + '%';
     const retentionChange = ((parseFloat(retention) - 30) * 0.15).toFixed(1);
-    document.getElementById('kpiRetentionChange').textContent = retentionChange > 0 ? '+' + retentionChange + ' pts vs Apr' : retentionChange + ' pts vs Apr';
+    document.getElementById('kpiRetentionChange').textContent = retentionChange > 0 ? '+' + retentionChange + ' pts vs last month' : retentionChange + ' pts vs last month';
     document.getElementById('kpiRetentionChange').className = retentionChange > 0 ? 'kpi-change positive' : 'kpi-change';
     
     document.getElementById('kpiEJV').textContent = score.toFixed(0);
@@ -1078,12 +1078,12 @@ function updateKPIs(result) {
     
     document.getElementById('kpiJobs').textContent = jobs.toLocaleString();
     const jobsChange = Math.round(jobs * 0.05);
-    document.getElementById('kpiJobsChange').textContent = '+' + jobsChange + ' vs Apr';
+    document.getElementById('kpiJobsChange').textContent = '+' + jobsChange + ' vs last month';
     document.getElementById('kpiJobsChange').className = 'kpi-change positive';
     
     document.getElementById('kpiBusinesses').textContent = businesses.toLocaleString();
     const bizChange = Math.round(businesses * 0.03);
-    document.getElementById('kpiBizChange').textContent = '+' + bizChange + ' vs Apr';
+    document.getElementById('kpiBizChange').textContent = '+' + bizChange + ' vs last month';
     document.getElementById('kpiBizChange').className = 'kpi-change positive';
     
     // Update location with actual ZIP name
